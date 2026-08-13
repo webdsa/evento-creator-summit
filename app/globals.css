@@ -1,0 +1,235 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    /* #ffffff12 = branco ~7% opacidade */
+    --card: 0 0% 100% / 0.07;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
+    --chart-1: 217 91% 60%;
+    --chart-2: 142 76% 36%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 text-foreground min-w-0 overflow-x-hidden;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Área pública: background fixo cobrindo 100% da viewport */
+  .public-area {
+    @apply min-w-0 overflow-x-hidden;
+    position: relative;
+    color: #fafafa;
+  }
+
+  .public-area::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    min-width: 100vw;
+    min-height: 100vh;
+    min-height: 100dvh;
+    z-index: -1;
+    background-image: url('/background-public.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #1a0a3a;
+  }
+
+  .public-area::after {
+    content: none !important;
+    display: none !important;
+    background-image: none !important;
+  }
+
+  .public-area .text-muted-foreground {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .public-area .gradient-text-hero {
+    color: transparent;
+    background-image: linear-gradient(to right, #e879f9, #f472b6, #fb923c);
+    -webkit-background-clip: text;
+    background-clip: text;
+    @apply font-bold;
+  }
+
+  .public-area .btn-primary-cta {
+    background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%);
+    color: #fff;
+  }
+  .public-area .btn-primary-cta:hover {
+    background: linear-gradient(135deg, #c2410c 0%, #b91c1c 100%);
+    color: #fff;
+  }
+
+  .public-area .btn-secondary-nav {
+    @apply bg-violet-700/90 text-white;
+  }
+  .public-area .btn-secondary-nav:hover {
+    @apply bg-violet-600 text-white;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight;
+    font-feature-settings: "ss01" 1;
+  }
+}
+
+@layer components {
+  .header-public-bg {
+    background-color: #0000004d;
+    backdrop-filter: blur(4px);
+  }
+  .footer-public-bg {
+    background-color: #0000004d;
+    backdrop-filter: blur(4px);
+  }
+
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-xl border border-white/20 shadow-xl;
+  }
+
+  .public-area .glass-card {
+    background-color: hsl(var(--card));
+    @apply backdrop-blur-xl shadow-2xl text-gray-900;
+  }
+
+  /* Remover bordas na área pública */
+  .public-area .border,
+  .public-area [class*='border-'] {
+    border: none !important;
+  }
+
+  /* Checkbox "Visitação Novo Tempo" na inscrição: forçar caixa visível (a regra acima remove bordas) */
+  .public-area .inscription-checkbox-novo-tempo button[role="checkbox"] {
+    border: 2px solid rgba(0, 0, 0, 0.4) !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    outline: 2px solid rgba(0, 0, 0, 0.15) !important;
+    outline-offset: 1px;
+    min-width: 1.25rem !important;
+    min-height: 1.25rem !important;
+    color: #171717;
+  }
+  .public-area .inscription-checkbox-novo-tempo button[role="checkbox"]:hover {
+    background: #fff !important;
+    border-color: rgba(0, 0, 0, 0.5) !important;
+  }
+  .public-area .inscription-checkbox-novo-tempo button[role="checkbox"][data-state="checked"] {
+    background: hsl(142 76% 36%) !important;
+    border-color: hsl(142 76% 36%) !important;
+    color: white !important;
+  }
+
+  /* Dentro do card o fundo é claro: texto deve ser escuro (evitar branco da .public-area) */
+  .public-area .glass-card .text-muted-foreground {
+    color: rgb(100 116 139);
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.4s ease-out;
+  }
+
+  .background-card {
+    background-color: hsl(0deg 0% 100% / 12%);
+  }
+
+  /* Inscrição e Consulta: card com fundo branco 100% */
+  .page-inscricao .background-card,
+  .page-consulta .background-card {
+    background-color: #ffffff;
+  }
+
+  /* Inscrição e Consulta: inputs com borda sólida 1px */
+  .page-inscricao input:not([type="checkbox"]):not([type="radio"]),
+  .page-consulta input:not([type="checkbox"]):not([type="radio"]) {
+    border: 1px solid hsl(var(--border)) !important;
+  }
+  .page-inscricao select,
+  .page-consulta select,
+  .page-inscricao textarea,
+  .page-consulta textarea {
+    border: 1px solid hsl(var(--border)) !important;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.gradient-text {
+  @apply bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent;
+}
+
+.public-area .gradient-text {
+  background-image: linear-gradient(to right, #c084fc, #e879f9, #f472b6);
+  @apply bg-clip-text text-transparent;
+}

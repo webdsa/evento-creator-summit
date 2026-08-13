@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "creator-summit",
+    "midiatec": "comunicadsa-eventos",
+    "summit": "creator-summit"
+  }
+}

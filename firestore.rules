@@ -1,0 +1,11 @@
+rules_version = '2';
+// Regras do Firestore (opcional: as APIs admin usam Firebase Admin SDK no servidor).
+// Use estas regras se quiser acessar Firestore diretamente do cliente em algum momento.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Bloquear acesso direto por padrão; o app usa APIs com token no servidor.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
