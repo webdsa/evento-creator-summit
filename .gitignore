@@ -25,9 +25,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env
-.env*.local
-
+.env*
 # vercel
 .vercel
 
@@ -37,3 +35,4 @@ next-env.d.ts
 comunicadsa-eventos-firebase-adminsdk-fbsvc-0dc2e91a0b.json
 creator-summit-firebase-adminsdk.json
 *-firebase-adminsdk*.json
+
