@@ -6,6 +6,8 @@ import { AuthProvider } from '@/lib/AuthProvider';
 import { Toaster } from '@/components/ui/toaster';
 import { DevAutoReload } from '@/components/DevAutoReload';
 import { PublicBackgroundScroll } from '@/components/PublicBackgroundScroll';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const archivoBlack = Archivo_Black({
@@ -33,6 +35,8 @@ export default function RootLayout({
             {children}
             <Toaster />
             <DevAutoReload />
+            <Analytics />
+            <SpeedInsights />
           </AuthProvider>
         </LanguageProvider>
       </body>
