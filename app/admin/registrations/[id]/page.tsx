@@ -20,6 +20,13 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, Save } from 'lucide-react';
+import { COUNTRY_OPTIONS, type CountryId, isValidCountryId } from '@/lib/countries';
+import {
+  type DocumentType,
+  getDocumentTypesForCountry,
+  sanitizeDocumentNumber,
+  validateDocument,
+} from '@/lib/document';
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino'] as const;
 const SHIRT_SIZE_OPTIONS = ['PP', 'P', 'M', 'G', 'GG', 'XG'] as const;
@@ -50,10 +57,11 @@ interface RegistrationData {
   plataforma?: string;
   seguidores?: number;
   documento?: string;
+  document_country?: string;
+  document_type?: string;
   conteudo?: string;
   link_or_handle?: string;
   wants_to_know_novo_tempo?: boolean;
-  tour_nt?: boolean;
   flight_departure_time?: string;
   flight_return_time?: string;
   role?: string;
@@ -89,10 +97,11 @@ export default function EditRegistrationPage() {
     plataforma: '',
     seguidores: '',
     documento: '',
+    document_country: '',
+    document_type: '',
     conteudo: '',
     link_or_handle: '',
     wants_to_know_novo_tempo: '' as '' | 'yes' | 'no',
-    tour_nt: '' as '' | 'yes' | 'no',
     flight_departure_time: '',
     flight_return_time: '',
     role: '',
@@ -124,11 +133,12 @@ export default function EditRegistrationPage() {
           plataforma: data.plataforma ?? '',
           seguidores: data.seguidores !== undefined && data.seguidores !== null ? String(data.seguidores) : '',
           documento: data.documento ?? '',
+          document_country: data.document_country ?? '',
+          document_type: data.document_type ?? '',
           conteudo: data.conteudo ?? '',
           link_or_handle: data.link_or_handle ?? '',
           wants_to_know_novo_tempo:
             data.wants_to_know_novo_tempo === true ? 'yes' : data.wants_to_know_novo_tempo === false ? 'no' : '',
-          tour_nt: data.tour_nt === true ? 'yes' : data.tour_nt === false ? 'no' : '',
           flight_departure_time: data.flight_departure_time ?? '',
           flight_return_time: data.flight_return_time ?? '',
           role: data.role ?? '',
@@ -173,6 +183,8 @@ export default function EditRegistrationPage() {
           plataforma: formData.plataforma.trim() || undefined,
           seguidores: formData.seguidores.trim() !== '' ? Number(formData.seguidores.replace(/\D/g, '')) : undefined,
           documento: formData.documento.trim() || undefined,
+          document_country: formData.document_country || undefined,
+          document_type: formData.document_type || undefined,
           conteudo: formData.conteudo.trim() || undefined,
           link_or_handle: formData.link_or_handle.trim() || undefined,
           wants_to_know_novo_tempo:
@@ -181,7 +193,6 @@ export default function EditRegistrationPage() {
               : formData.wants_to_know_novo_tempo === 'no'
                 ? false
                 : undefined,
-          tour_nt: formData.tour_nt === 'yes' ? true : formData.tour_nt === 'no' ? false : undefined,
           flight_departure_time: formData.flight_departure_time || undefined,
           flight_return_time: formData.flight_return_time || undefined,
           role: formData.role || undefined,
@@ -201,11 +212,12 @@ export default function EditRegistrationPage() {
         plataforma: updated.plataforma ?? '',
         seguidores: updated.seguidores !== undefined && updated.seguidores !== null ? String(updated.seguidores) : '',
         documento: updated.documento ?? '',
+        document_country: updated.document_country ?? '',
+        document_type: updated.document_type ?? '',
         conteudo: updated.conteudo ?? '',
         link_or_handle: updated.link_or_handle ?? '',
         wants_to_know_novo_tempo:
           updated.wants_to_know_novo_tempo === true ? 'yes' : updated.wants_to_know_novo_tempo === false ? 'no' : '',
-        tour_nt: updated.tour_nt === true ? 'yes' : updated.tour_nt === false ? 'no' : '',
         flight_departure_time: updated.flight_departure_time ?? '',
         flight_return_time: updated.flight_return_time ?? '',
         role: updated.role ?? '',
@@ -399,27 +411,6 @@ export default function EditRegistrationPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>{t.admin.registrations.tourNt}</Label>
-                <Select
-                  value={formData.tour_nt || '__none__'}
-                  onValueChange={(v) =>
-                    setFormData({
-                      ...formData,
-                      tour_nt: v === '__none__' ? '' : (v as 'yes' | 'no'),
-                    })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t.admin.registrations.tourNt} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">—</SelectItem>
-                    <SelectItem value="yes">{t.common.yes}</SelectItem>
-                    <SelectItem value="no">{t.common.no}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -432,11 +423,87 @@ export default function EditRegistrationPage() {
                 />
               </div>
               <div className="space-y-2">
+                <Label>{t.admin.registrations.documentCountry}</Label>
+                <Select
+                  value={formData.document_country || '__none__'}
+                  onValueChange={(v) => {
+                    if (v === '__none__') {
+                      setFormData({ ...formData, document_country: '', document_type: '', documento: '' });
+                      return;
+                    }
+                    const country = v as CountryId;
+                    const types = getDocumentTypesForCountry(country);
+                    setFormData({
+                      ...formData,
+                      document_country: country,
+                      document_type: types.length === 1 ? types[0] : '',
+                      documento: '',
+                    });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t.publicInscription.countryPlaceholder} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">—</SelectItem>
+                    {COUNTRY_OPTIONS.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t.admin.registrations.documentType}</Label>
+                <Select
+                  value={formData.document_type || '__none__'}
+                  onValueChange={(v) =>
+                    setFormData({
+                      ...formData,
+                      document_type: v === '__none__' ? '' : v,
+                      documento: '',
+                    })
+                  }
+                  disabled={!formData.document_country}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t.publicInscription.documentTypePlaceholder} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">—</SelectItem>
+                    {(isValidCountryId(formData.document_country)
+                      ? getDocumentTypesForCountry(formData.document_country)
+                      : []
+                    ).map((opt) => (
+                      <SelectItem key={opt} value={opt}>
+                        {t.publicInscription.documentTypeOptions[opt] ?? opt}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="documento">{t.admin.registrations.documento}</Label>
                 <Input
                   id="documento"
                   value={formData.documento}
-                  onChange={(e) => setFormData({ ...formData, documento: e.target.value })}
+                  onChange={(e) => {
+                    if (!isValidCountryId(formData.document_country) || !formData.document_type) {
+                      setFormData({ ...formData, documento: e.target.value.toUpperCase() });
+                      return;
+                    }
+                    setFormData({
+                      ...formData,
+                      documento: sanitizeDocumentNumber(
+                        formData.document_country,
+                        formData.document_type as DocumentType,
+                        e.target.value
+                      ),
+                    });
+                  }}
                   placeholder={t.publicInscription.documentoPlaceholder}
                 />
               </div>

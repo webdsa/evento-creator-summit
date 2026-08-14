@@ -56,10 +56,11 @@ interface Registration {
   plataforma?: string;
   seguidores?: number;
   documento?: string;
+  document_country?: string;
+  document_type?: string;
   conteudo?: string;
   link_or_handle?: string;
   wants_to_know_novo_tempo?: boolean;
-  tour_nt?: boolean;
   flight_departure_time?: string;
   flight_return_time?: string;
   role?: string;
@@ -325,13 +326,13 @@ export default function RegistrationsPage() {
         [t.admin.registrations.campo]: reg.campo ?? '',
         [t.admin.registrations.plataforma]: reg.plataforma ?? '',
         [t.admin.registrations.seguidores]: reg.seguidores ?? '',
+        [t.admin.registrations.documentCountry]: reg.document_country ?? '',
+        [t.admin.registrations.documentType]: reg.document_type ?? '',
         [t.admin.registrations.documento]: reg.documento ?? '',
         [t.admin.registrations.conteudo]: reg.conteudo ?? '',
         [t.admin.registrations.linkOrHandle]: reg.link_or_handle ?? '',
         [t.admin.registrations.visitation]:
           reg.wants_to_know_novo_tempo === true ? t.common.yes : t.common.no,
-        [t.admin.registrations.tourNt]:
-          reg.tour_nt === true ? t.common.yes : t.common.no,
         [t.admin.registrations.flightDepartureTime]: reg.flight_departure_time ?? '',
         [t.admin.registrations.flightReturnTime]: reg.flight_return_time ?? '',
         [t.admin.registrations.role]: reg.role ?? '',

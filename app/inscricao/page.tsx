@@ -23,12 +23,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino'] as const;
-const ROLE_OPTIONS = ['Administração', 'Coordenador', 'Departamental', 'Designer', 'Editor(a)', 'Gerente', 'Produtor(a)', 'Secretária'] as const;
 const SHIRT_SIZE_OPTIONS = ['PP', 'P', 'M', 'G', 'GG', 'XG'] as const;
 
 import { type CountryId, isValidCountryId, getDefaultLanguageForCountry } from '@/lib/countries';
-import { InstitutionGroupBanner } from '@/lib/institution-group-banner';
-
+import {
+  type DocumentType,
+  getDocumentHintKey,
+  getDocumentTypesForCountry,
+  sanitizeDocumentNumber,
+  validateDocument,
+} from '@/lib/document';
 const COUNTRY_PHONE_OPTIONS: {
   id: CountryId;
   name: string;
@@ -173,19 +177,10 @@ interface RegistrationSuccess {
   phone: string;
   gender?: string;
   shirtSize?: string;
-  campo?: string;
-  plataforma?: string;
-  seguidores?: number;
   documento?: string;
-  conteudo?: string;
-  linkOrHandle?: string;
+  documentType?: string;
   wantsToKnowNovoTempo?: boolean;
-  tourNt?: boolean;
-  flightDepartureTime?: string;
-  flightReturnTime?: string;
-  role?: string;
   institution: string;
-  institutionGroup?: 1 | 2 | 3;
 }
 
 function InscricaoContent() {
@@ -209,17 +204,9 @@ function InscricaoContent() {
     phone: '',
     gender: '' as string,
     shirtSize: '',
-    campo: '',
-    plataforma: '',
-    seguidores: '',
+    documentType: '' as DocumentType | '',
     documento: '',
-    conteudo: '',
-    linkOrHandle: '',
     wantsToKnowNovoTempo: false,
-    tourNt: false,
-    flightDepartureTime: '',
-    flightReturnTime: '',
-    role: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -255,7 +242,13 @@ function InscricaoContent() {
       });
       const instCountry = data.institution?.country;
       if (instCountry && isValidCountryId(instCountry)) {
-        setFormData((prev) => ({ ...prev, phoneCountry: instCountry }));
+        const types = getDocumentTypesForCountry(instCountry);
+        setFormData((prev) => ({
+          ...prev,
+          phoneCountry: instCountry,
+          documentType: types.length === 1 ? types[0] : '',
+          documento: '',
+        }));
         setLanguage(getDefaultLanguageForCountry(instCountry));
       }
     } catch (error) {
@@ -310,42 +303,22 @@ function InscricaoContent() {
       newErrors.gender = t.errors.requiredField;
     }
 
-    if (!formData.role.trim()) {
-      newErrors.role = t.errors.requiredField;
-    } else if (!ROLE_OPTIONS.includes(formData.role as (typeof ROLE_OPTIONS)[number])) {
-      newErrors.role = t.errors.requiredField;
-    }
-
-    if (!formData.campo.trim()) {
-      newErrors.campo = t.errors.requiredField;
-    }
-    if (!formData.plataforma.trim()) {
-      newErrors.plataforma = t.errors.requiredField;
-    }
-    if (!formData.seguidores.trim()) {
-      newErrors.seguidores = t.errors.requiredField;
-    } else if (!/^\d+$/.test(formData.seguidores.trim())) {
-      newErrors.seguidores = t.errors.requiredField;
+    if (!formData.documentType) {
+      newErrors.documentType = t.errors.requiredField;
     }
     if (!formData.documento.trim()) {
       newErrors.documento = t.errors.requiredField;
-    }
-    if (!formData.conteudo.trim()) {
-      newErrors.conteudo = t.errors.requiredField;
-    }
-    if (!formData.linkOrHandle.trim()) {
-      newErrors.linkOrHandle = t.errors.requiredField;
+    } else if (
+      !formData.phoneCountry ||
+      !formData.documentType ||
+      !validateDocument(formData.phoneCountry, formData.documentType, formData.documento).ok
+    ) {
+      newErrors.documento = t.errors.invalidDocumento;
     }
     if (!formData.shirtSize) {
       newErrors.shirtSize = t.errors.requiredField;
     } else if (!SHIRT_SIZE_OPTIONS.includes(formData.shirtSize as (typeof SHIRT_SIZE_OPTIONS)[number])) {
       newErrors.shirtSize = t.errors.requiredField;
-    }
-    if (!formData.flightDepartureTime) {
-      newErrors.flightDepartureTime = t.errors.requiredField;
-    }
-    if (!formData.flightReturnTime) {
-      newErrors.flightReturnTime = t.errors.requiredField;
     }
 
     setErrors(newErrors);
@@ -378,17 +351,10 @@ function InscricaoContent() {
           phone: fullPhone,
           gender: formData.gender,
           shirtSize: formData.shirtSize,
-          campo: formData.campo,
-          plataforma: formData.plataforma,
-          seguidores: Number(formData.seguidores.replace(/\D/g, '')),
+          documentCountry: formData.phoneCountry,
+          documentType: formData.documentType,
           documento: formData.documento,
-          conteudo: formData.conteudo,
-          linkOrHandle: formData.linkOrHandle,
           wantsToKnowNovoTempo: formData.wantsToKnowNovoTempo,
-          tourNt: formData.tourNt,
-          flightDepartureTime: formData.flightDepartureTime,
-          flightReturnTime: formData.flightReturnTime,
-          role: formData.role,
           language,
         }),
       });
@@ -399,12 +365,16 @@ function InscricaoContent() {
         toast({
           variant: 'destructive',
           title: t.common.error,
-          description: data.error || t.errors.registrationFailed,
+          description:
+            data.error === 'invalidDocumento'
+              ? t.errors.invalidDocumento
+              : data.error === 'documentalreadyregistered'
+                ? t.errors.documentAlreadyRegistered
+                : data.error || t.errors.registrationFailed,
         });
         return;
       }
 
-      const ig = data.institutionGroup;
       setSuccess({
         registrationCode: data.registrationCode,
         fullName: data.fullName,
@@ -412,19 +382,10 @@ function InscricaoContent() {
         phone: data.phone,
         gender: data.gender,
         shirtSize: data.shirtSize,
-        campo: data.campo,
-        plataforma: data.plataforma,
-        seguidores: data.seguidores,
         documento: data.documento,
-        conteudo: data.conteudo,
-        linkOrHandle: data.linkOrHandle,
+        documentType: data.documentType,
         wantsToKnowNovoTempo: data.wantsToKnowNovoTempo,
-        tourNt: data.tourNt,
-        flightDepartureTime: data.flightDepartureTime,
-        flightReturnTime: data.flightReturnTime,
-        role: data.role,
         institution: data.institution,
-        institutionGroup: ig === 1 || ig === 2 || ig === 3 ? ig : undefined,
       });
     } catch (error) {
       toast({
@@ -481,6 +442,17 @@ function InscricaoContent() {
                       </dt>
                       <dd className="font-semibold text-gray-900">{success.fullName}</dd>
                     </div>
+                    {success.documento && (
+                      <div className="border-b border-gray-100 pb-3">
+                        <dt className="text-sm font-medium text-gray-500 mb-1">
+                          {success.documentType
+                            ? t.publicInscription.documentTypeOptions[success.documentType] ??
+                              t.publicInscription.documento
+                            : t.publicInscription.documento}
+                        </dt>
+                        <dd className="font-semibold text-gray-900">{success.documento}</dd>
+                      </div>
+                    )}
                     <div className="border-b border-gray-100 pb-3">
                       <dt className="text-sm font-medium text-gray-500 mb-1">
                         {t.publicInscription.email}
@@ -501,72 +473,6 @@ function InscricaoContent() {
                         <dd className="font-semibold text-gray-900">{success.gender}</dd>
                       </div>
                     )}
-                    {success.wantsToKnowNovoTempo && (
-                      <div className="border-b border-gray-100 pb-3">
-                        <dt className="text-sm font-medium text-gray-500 mb-1">
-                          {t.publicInscription.wantsToKnowNovoTempo}
-                        </dt>
-                        <dd className="font-semibold text-gray-900">{t.common.yes}</dd>
-                      </div>
-                    )}
-                    {success.role && (
-                      <div className="border-b border-gray-100 pb-3">
-                        <dt className="text-sm font-medium text-gray-500 mb-1">
-                          {t.publicInscription.role}
-                        </dt>
-                        <dd className="font-semibold text-gray-900">
-                          {t.publicInscription.roleOptions[success.role] ?? success.role}
-                        </dd>
-                      </div>
-                    )}
-                    {success.campo && (
-                      <div className="border-b border-gray-100 pb-3">
-                        <dt className="text-sm font-medium text-gray-500 mb-1">
-                          {t.publicInscription.campo}
-                        </dt>
-                        <dd className="font-semibold text-gray-900">{success.campo}</dd>
-                      </div>
-                    )}
-                    {success.plataforma && (
-                      <div className="border-b border-gray-100 pb-3">
-                        <dt className="text-sm font-medium text-gray-500 mb-1">
-                          {t.publicInscription.plataforma}
-                        </dt>
-                        <dd className="font-semibold text-gray-900">{success.plataforma}</dd>
-                      </div>
-                    )}
-                    {success.seguidores !== undefined && (
-                      <div className="border-b border-gray-100 pb-3">
-                        <dt className="text-sm font-medium text-gray-500 mb-1">
-                          {t.publicInscription.seguidores}
-                        </dt>
-                        <dd className="font-semibold text-gray-900">{success.seguidores}</dd>
-                      </div>
-                    )}
-                    {success.documento && (
-                      <div className="border-b border-gray-100 pb-3">
-                        <dt className="text-sm font-medium text-gray-500 mb-1">
-                          {t.publicInscription.documento}
-                        </dt>
-                        <dd className="font-semibold text-gray-900">{success.documento}</dd>
-                      </div>
-                    )}
-                    {success.conteudo && (
-                      <div className="border-b border-gray-100 pb-3">
-                        <dt className="text-sm font-medium text-gray-500 mb-1">
-                          {t.publicInscription.conteudo}
-                        </dt>
-                        <dd className="font-semibold text-gray-900">{success.conteudo}</dd>
-                      </div>
-                    )}
-                    {success.linkOrHandle && (
-                      <div className="border-b border-gray-100 pb-3">
-                        <dt className="text-sm font-medium text-gray-500 mb-1">
-                          {t.publicInscription.linkOrHandle}
-                        </dt>
-                        <dd className="font-semibold text-gray-900">{success.linkOrHandle}</dd>
-                      </div>
-                    )}
                     {success.shirtSize && (
                       <div className="border-b border-gray-100 pb-3">
                         <dt className="text-sm font-medium text-gray-500 mb-1">
@@ -575,28 +481,12 @@ function InscricaoContent() {
                         <dd className="font-semibold text-gray-900">{success.shirtSize}</dd>
                       </div>
                     )}
-                    {success.tourNt && (
+                    {success.wantsToKnowNovoTempo && (
                       <div className="border-b border-gray-100 pb-3">
                         <dt className="text-sm font-medium text-gray-500 mb-1">
-                          {t.publicInscription.tourNt}
+                          {t.publicInscription.wantsToKnowNovoTempo}
                         </dt>
                         <dd className="font-semibold text-gray-900">{t.common.yes}</dd>
-                      </div>
-                    )}
-                    {success.flightDepartureTime && (
-                      <div className="border-b border-gray-100 pb-3">
-                        <dt className="text-sm font-medium text-gray-500 mb-1">
-                          {t.publicInscription.flightDepartureTime}
-                        </dt>
-                        <dd className="font-semibold text-gray-900">{success.flightDepartureTime}</dd>
-                      </div>
-                    )}
-                    {success.flightReturnTime && (
-                      <div className="border-b border-gray-100 pb-3">
-                        <dt className="text-sm font-medium text-gray-500 mb-1">
-                          {t.publicInscription.flightReturnTime}
-                        </dt>
-                        <dd className="font-semibold text-gray-900">{success.flightReturnTime}</dd>
                       </div>
                     )}
                     <div>
@@ -613,27 +503,6 @@ function InscricaoContent() {
                     {t.publicInscription.checkEmailConfirmation}
                   </AlertDescription>
                 </Alert>
-
-                {success.institutionGroup !== undefined && (
-                  <InstitutionGroupBanner
-                    group={success.institutionGroup}
-                    groupLabel={t.checkStatus.institutionGroup}
-                    groupTitle={
-                      [
-                        t.checkStatus.group1,
-                        t.checkStatus.group2,
-                        t.checkStatus.group3,
-                      ][success.institutionGroup - 1]
-                    }
-                    colorName={
-                      [
-                        t.checkStatus.groupColorRed,
-                        t.checkStatus.groupColorGreen,
-                        t.checkStatus.groupColorBlue,
-                      ][success.institutionGroup - 1]
-                    }
-                  />
-                )}
               </CardContent>
             </Card>
           </div>
@@ -806,13 +675,17 @@ function InscricaoContent() {
                       <div className="flex flex-col sm:flex-row gap-3">
                         <Select
                           value={formData.phoneCountry || undefined}
-                          onValueChange={(value) =>
+                          onValueChange={(value) => {
+                            const country = value as CountryId;
+                            const types = getDocumentTypesForCountry(country);
                             setFormData({
                               ...formData,
-                              phoneCountry: value as CountryId,
+                              phoneCountry: country,
                               phone: '',
-                            })
-                          }
+                              documentType: types.length === 1 ? types[0] : '',
+                              documento: '',
+                            });
+                          }}
                         >
                           <SelectTrigger
                             className={`h-12 min-h-[44px] sm:w-[180px] w-full ${errors.phoneCountry ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
@@ -862,6 +735,76 @@ function InscricaoContent() {
                       )}
                     </div>
 
+                    <div className="flex flex-col sm:flex-row gap-3 sm:items-start">
+                      <div className="space-y-2 w-full sm:w-[30%] sm:shrink-0">
+                        <Label className="text-sm sm:text-base font-semibold">
+                          {t.publicInscription.documentType}
+                        </Label>
+                        <Select
+                          value={formData.documentType || undefined}
+                          onValueChange={(value) =>
+                            setFormData({
+                              ...formData,
+                              documentType: value as DocumentType,
+                              documento: '',
+                            })
+                          }
+                          disabled={!formData.phoneCountry}
+                        >
+                          <SelectTrigger
+                            className={`h-12 min-h-[44px] ${errors.documentType ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                          >
+                            <SelectValue placeholder={t.publicInscription.documentTypePlaceholder} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(formData.phoneCountry
+                              ? getDocumentTypesForCountry(formData.phoneCountry)
+                              : []
+                            ).map((opt) => (
+                              <SelectItem key={opt} value={opt}>
+                                {t.publicInscription.documentTypeOptions[opt] ?? opt}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {errors.documentType && (
+                          <p className="text-sm text-red-600 mt-1 font-medium">{errors.documentType}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2 w-full sm:min-w-0 sm:flex-1">
+                        <Label htmlFor="documento" className="text-sm sm:text-base font-semibold">
+                          {t.publicInscription.documento}
+                        </Label>
+                        <Input
+                          id="documento"
+                          placeholder={t.publicInscription.documentoPlaceholder}
+                          value={formData.documento}
+                          disabled={!formData.phoneCountry || !formData.documentType}
+                          onChange={(e) => {
+                            if (!formData.phoneCountry || !formData.documentType) return;
+                            setFormData({
+                              ...formData,
+                              documento: sanitizeDocumentNumber(
+                                formData.phoneCountry,
+                                formData.documentType,
+                                e.target.value
+                              ),
+                            });
+                          }}
+                          className={`h-12 min-h-[44px] uppercase ${errors.documento ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                        />
+                        <p className="text-xs sm:text-sm text-gray-600">
+                          {!formData.phoneCountry
+                            ? t.publicInscription.documentoSelectCountryFirst
+                            : t.publicInscription[getDocumentHintKey(formData.documentType)]}
+                        </p>
+                        {errors.documento && (
+                          <p className="text-sm text-red-600 mt-1 font-medium">{errors.documento}</p>
+                        )}
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
                       <Label className="text-sm sm:text-base font-semibold">
                         {t.publicInscription.gender}
@@ -885,167 +828,6 @@ function InscricaoContent() {
                       </Select>
                       {errors.gender && (
                         <p className="text-sm text-red-600 mt-1 font-medium">{errors.gender}</p>
-                      )}
-                    </div>
-
-                    <div className="inscription-checkbox-novo-tempo flex items-center gap-3 py-1">
-                      <Checkbox
-                        id="wantsToKnowNovoTempo"
-                        checked={formData.wantsToKnowNovoTempo}
-                        onCheckedChange={(checked) =>
-                          setFormData({ ...formData, wantsToKnowNovoTempo: checked === true })
-                        }
-                        className="h-5 w-5 shrink-0"
-                      />
-                      <Label
-                        htmlFor="wantsToKnowNovoTempo"
-                        className="text-sm sm:text-base font-medium cursor-pointer leading-tight text-gray-900"
-                      >
-                        {t.publicInscription.wantsToKnowNovoTempo}
-                      </Label>
-                    </div>
-
-                    <div className="flex items-center gap-3 py-1">
-                      <Checkbox
-                        id="tourNt"
-                        checked={formData.tourNt}
-                        onCheckedChange={(checked) =>
-                          setFormData({ ...formData, tourNt: checked === true })
-                        }
-                        className="h-5 w-5 shrink-0"
-                      />
-                      <Label
-                        htmlFor="tourNt"
-                        className="text-sm sm:text-base font-medium cursor-pointer leading-tight text-gray-900"
-                      >
-                        {t.publicInscription.tourNt}
-                      </Label>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="role" className="text-sm sm:text-base font-semibold">
-                        {t.publicInscription.role}
-                      </Label>
-                      <Select
-                        value={formData.role || undefined}
-                        onValueChange={(value) => setFormData({ ...formData, role: value })}
-                      >
-                        <SelectTrigger
-                          id="role"
-                          className={`h-12 min-h-[44px] ${errors.role ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                        >
-                          <SelectValue placeholder={t.publicInscription.rolePlaceholder} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ROLE_OPTIONS.map((opt) => (
-                            <SelectItem key={opt} value={opt}>
-                              {t.publicInscription.roleOptions[opt] ?? opt}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {errors.role && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">{errors.role}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="campo" className="text-sm sm:text-base font-semibold">
-                        {t.publicInscription.campo}
-                      </Label>
-                      <Input
-                        id="campo"
-                        placeholder={t.publicInscription.campoPlaceholder}
-                        value={formData.campo}
-                        onChange={(e) => setFormData({ ...formData, campo: e.target.value })}
-                        className={`h-12 min-h-[44px] ${errors.campo ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                      />
-                      {errors.campo && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">{errors.campo}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="plataforma" className="text-sm sm:text-base font-semibold">
-                        {t.publicInscription.plataforma}
-                      </Label>
-                      <Input
-                        id="plataforma"
-                        placeholder={t.publicInscription.plataformaPlaceholder}
-                        value={formData.plataforma}
-                        onChange={(e) => setFormData({ ...formData, plataforma: e.target.value })}
-                        className={`h-12 min-h-[44px] ${errors.plataforma ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                      />
-                      {errors.plataforma && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">{errors.plataforma}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="seguidores" className="text-sm sm:text-base font-semibold">
-                        {t.publicInscription.seguidores}
-                      </Label>
-                      <Input
-                        id="seguidores"
-                        type="text"
-                        inputMode="numeric"
-                        placeholder={t.publicInscription.seguidoresPlaceholder}
-                        value={formData.seguidores}
-                        onChange={(e) =>
-                          setFormData({ ...formData, seguidores: e.target.value.replace(/\D/g, '') })
-                        }
-                        className={`h-12 min-h-[44px] ${errors.seguidores ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                      />
-                      {errors.seguidores && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">{errors.seguidores}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="documento" className="text-sm sm:text-base font-semibold">
-                        {t.publicInscription.documento}
-                      </Label>
-                      <Input
-                        id="documento"
-                        placeholder={t.publicInscription.documentoPlaceholder}
-                        value={formData.documento}
-                        onChange={(e) => setFormData({ ...formData, documento: e.target.value })}
-                        className={`h-12 min-h-[44px] ${errors.documento ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                      />
-                      {errors.documento && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">{errors.documento}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="conteudo" className="text-sm sm:text-base font-semibold">
-                        {t.publicInscription.conteudo}
-                      </Label>
-                      <Input
-                        id="conteudo"
-                        placeholder={t.publicInscription.conteudoPlaceholder}
-                        value={formData.conteudo}
-                        onChange={(e) => setFormData({ ...formData, conteudo: e.target.value })}
-                        className={`h-12 min-h-[44px] ${errors.conteudo ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                      />
-                      {errors.conteudo && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">{errors.conteudo}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="linkOrHandle" className="text-sm sm:text-base font-semibold">
-                        {t.publicInscription.linkOrHandle}
-                      </Label>
-                      <Input
-                        id="linkOrHandle"
-                        placeholder={t.publicInscription.linkOrHandlePlaceholder}
-                        value={formData.linkOrHandle}
-                        onChange={(e) => setFormData({ ...formData, linkOrHandle: e.target.value })}
-                        className={`h-12 min-h-[44px] ${errors.linkOrHandle ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                      />
-                      {errors.linkOrHandle && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">{errors.linkOrHandle}</p>
                       )}
                     </div>
 
@@ -1075,45 +857,21 @@ function InscricaoContent() {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="flightDepartureTime" className="text-sm sm:text-base font-semibold">
-                          {t.publicInscription.flightDepartureTime}
-                        </Label>
-                        <Input
-                          id="flightDepartureTime"
-                          type="time"
-                          value={formData.flightDepartureTime}
-                          onChange={(e) =>
-                            setFormData({ ...formData, flightDepartureTime: e.target.value })
-                          }
-                          className={`h-12 min-h-[44px] ${errors.flightDepartureTime ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                        />
-                        {errors.flightDepartureTime && (
-                          <p className="text-sm text-red-600 mt-1 font-medium">
-                            {errors.flightDepartureTime}
-                          </p>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="flightReturnTime" className="text-sm sm:text-base font-semibold">
-                          {t.publicInscription.flightReturnTime}
-                        </Label>
-                        <Input
-                          id="flightReturnTime"
-                          type="time"
-                          value={formData.flightReturnTime}
-                          onChange={(e) =>
-                            setFormData({ ...formData, flightReturnTime: e.target.value })
-                          }
-                          className={`h-12 min-h-[44px] ${errors.flightReturnTime ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                        />
-                        {errors.flightReturnTime && (
-                          <p className="text-sm text-red-600 mt-1 font-medium">
-                            {errors.flightReturnTime}
-                          </p>
-                        )}
-                      </div>
+                    <div className="inscription-checkbox-novo-tempo flex items-center gap-3 py-1">
+                      <Checkbox
+                        id="wantsToKnowNovoTempo"
+                        checked={formData.wantsToKnowNovoTempo}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, wantsToKnowNovoTempo: checked === true })
+                        }
+                        className="h-5 w-5 shrink-0"
+                      />
+                      <Label
+                        htmlFor="wantsToKnowNovoTempo"
+                        className="text-sm sm:text-base font-medium cursor-pointer leading-tight text-gray-900"
+                      >
+                        {t.publicInscription.wantsToKnowNovoTempo}
+                      </Label>
                     </div>
 
                     <Button

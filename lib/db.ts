@@ -66,10 +66,11 @@ export interface Registration {
   plataforma?: string;
   seguidores?: number;
   documento?: string;
+  document_country?: string;
+  document_type?: string;
   conteudo?: string;
   link_or_handle?: string;
   wants_to_know_novo_tempo?: boolean;
-  tour_nt?: boolean;
   flight_departure_time?: string;
   flight_return_time?: string;
   role?: string;
@@ -806,6 +807,25 @@ async function getUniqueRegistrationCode(): Promise<string> {
   throw new Error('Não foi possível gerar código de inscrição único. Tente novamente.');
 }
 
+export async function findConfirmedRegistrationByDocument(
+  country: string,
+  type: string,
+  documento: string
+): Promise<Registration | null> {
+  const value = documento.trim().toUpperCase();
+  if (!country || !type || !value) return null;
+  const snap = await db().collection(COLL.registrations).where('documento', '==', value).limit(20).get();
+  const match = snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as Registration))
+    .find(
+      (reg) =>
+        reg.status === 'confirmed' &&
+        reg.document_country === country &&
+        reg.document_type === type
+    );
+  return match ?? null;
+}
+
 // --- Registrations (create_registration logic) ---
 export type CreateRegistrationResult =
   | { success: true; registration_id: string; registration_code: string }
@@ -818,17 +838,18 @@ export async function createRegistration(params: {
   p_phone: string;
   p_gender: string;
   p_shirt_size: string;
-  p_campo: string;
-  p_plataforma: string;
-  p_seguidores: number;
+  p_campo?: string;
+  p_plataforma?: string;
+  p_seguidores?: number;
   p_documento: string;
-  p_conteudo: string;
-  p_link_or_handle: string;
+  p_document_country: string;
+  p_document_type: string;
+  p_conteudo?: string;
+  p_link_or_handle?: string;
   p_wants_to_know_novo_tempo: boolean;
-  p_tour_nt: boolean;
-  p_flight_departure_time: string;
-  p_flight_return_time: string;
-  p_role: string;
+  p_flight_departure_time?: string;
+  p_flight_return_time?: string;
+  p_role?: string;
   p_language: string;
 }): Promise<CreateRegistrationResult> {
   const {
@@ -842,10 +863,11 @@ export async function createRegistration(params: {
     p_plataforma,
     p_seguidores,
     p_documento,
+    p_document_country,
+    p_document_type,
     p_conteudo,
     p_link_or_handle,
     p_wants_to_know_novo_tempo,
-    p_tour_nt,
     p_flight_departure_time,
     p_flight_return_time,
     p_role,
@@ -872,6 +894,13 @@ export async function createRegistration(params: {
   const emailIndexDoc = await db().collection(COLL.emailIndex).doc(emailNormalized).get();
   if (emailIndexDoc.exists) return { success: false, error: 'EMAIL_ALREADY_REGISTERED' };
 
+  const existingDocument = await findConfirmedRegistrationByDocument(
+    p_document_country,
+    p_document_type,
+    p_documento
+  );
+  if (existingDocument) return { success: false, error: 'DOCUMENT_ALREADY_REGISTERED' };
+
   const registrationCode = await getUniqueRegistrationCode();
   const voucherCode = p_voucher_code.trim().toUpperCase();
   const regRef = db().collection(COLL.registrations).doc();
@@ -887,12 +916,13 @@ export async function createRegistration(params: {
     shirt_size: p_shirt_size || undefined,
     campo: p_campo || undefined,
     plataforma: p_plataforma || undefined,
-    seguidores: Number.isFinite(p_seguidores) ? p_seguidores : undefined,
+    seguidores: p_seguidores !== undefined && Number.isFinite(p_seguidores) ? p_seguidores : undefined,
     documento: p_documento || undefined,
+    document_country: p_document_country || undefined,
+    document_type: p_document_type || undefined,
     conteudo: p_conteudo || undefined,
     link_or_handle: p_link_or_handle || undefined,
     wants_to_know_novo_tempo: p_wants_to_know_novo_tempo,
-    tour_nt: p_tour_nt,
     flight_departure_time: p_flight_departure_time || undefined,
     flight_return_time: p_flight_return_time || undefined,
     role: p_role || undefined,
@@ -909,12 +939,16 @@ export async function createRegistration(params: {
     confirmation_email_last_error: null,
   };
 
+  const registrationDoc = Object.fromEntries(
+    Object.entries(registration).filter(([, value]) => value !== undefined)
+  );
+
   const voucherRef = db().collection(COLL.vouchers).doc(voucher.id);
   const institutionRef = db().collection(COLL.institutions).doc(voucher.institution_id);
   const emailIndexRef = db().collection(COLL.emailIndex).doc(emailNormalized);
 
   await db().runTransaction(async (tx) => {
-    tx.set(regRef, registration);
+    tx.set(regRef, registrationDoc);
     tx.set(emailIndexRef, { registrationId: regRef.id, created_at: t });
     tx.update(voucherRef, { used_count: (voucher.used_count ?? 0) + 1, updated_at: t });
     tx.update(institutionRef, { used_count: institution.used_count + 1, updated_at: t });
@@ -1142,10 +1176,11 @@ export type UpdateRegistrationData = Partial<
     | 'plataforma'
     | 'seguidores'
     | 'documento'
+    | 'document_country'
+    | 'document_type'
     | 'conteudo'
     | 'link_or_handle'
     | 'wants_to_know_novo_tempo'
-    | 'tour_nt'
     | 'flight_departure_time'
     | 'flight_return_time'
     | 'role'

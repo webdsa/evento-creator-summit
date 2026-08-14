@@ -93,12 +93,20 @@ export interface Dictionary {
     seguidoresPlaceholder: string;
     documento: string;
     documentoPlaceholder: string;
+    documentoHint: string;
+    documentoHintCpf: string;
+    documentoHintDni: string;
+    documentoHintCedula: string;
+    documentoHintPassport: string;
+    documentoSelectCountryFirst: string;
+    documentType: string;
+    documentTypePlaceholder: string;
+    documentTypeOptions: Record<string, string>;
     conteudo: string;
     conteudoPlaceholder: string;
     linkOrHandle: string;
     linkOrHandlePlaceholder: string;
     wantsToKnowNovoTempo: string;
-    tourNt: string;
     flightDepartureTime: string;
     flightReturnTime: string;
     role: string;
@@ -125,13 +133,6 @@ export interface Dictionary {
     notFound: string;
     fullName: string;
     institution: string;
-    institutionGroup: string;
-    group1: string;
-    group2: string;
-    group3: string;
-    groupColorRed: string;
-    groupColorGreen: string;
-    groupColorBlue: string;
     registeredAt: string;
     workshopsTitle: string;
     workshopsSubtitle: string;
@@ -178,6 +179,8 @@ export interface Dictionary {
 
   errors: {
     requiredField: string;
+    invalidDocumento: string;
+    documentAlreadyRegistered: string;
     invalidEmail: string;
     invalidPhone: string;
     voucherNotFound: string;
@@ -455,9 +458,10 @@ export interface Dictionary {
       plataforma: string;
       seguidores: string;
       documento: string;
+      documentType: string;
+      documentCountry: string;
       conteudo: string;
       linkOrHandle: string;
-      tourNt: string;
       flightDepartureTime: string;
       flightReturnTime: string;
       visitation: string;
@@ -610,13 +614,26 @@ export const dictionaries: Record<Language, Dictionary> = {
       seguidores: 'Seguidores',
       seguidoresPlaceholder: 'Ex: 10000',
       documento: 'Documento',
-      documentoPlaceholder: 'CPF, DNI ou passaporte',
+      documentoPlaceholder: 'Informe o número',
+      documentoHint: 'Selecione o tipo de documento para ver o formato aceito.',
+      documentoHintCpf: 'CPF com 11 dígitos.',
+      documentoHintDni: 'Somente números, no formato do país.',
+      documentoHintCedula: 'Cédula de identidade do país selecionado.',
+      documentoHintPassport: 'Letras e números do passaporte (6 a 12 caracteres).',
+      documentoSelectCountryFirst: 'Selecione o país do telefone para informar o documento.',
+      documentType: 'Tipo de documento',
+      documentTypePlaceholder: 'Selecione o tipo',
+      documentTypeOptions: {
+        cpf: 'CPF',
+        dni: 'DNI',
+        cedula: 'Cédula de identidade',
+        passport: 'Passaporte',
+      },
       conteudo: 'Conteúdo',
       conteudoPlaceholder: 'Tipo ou descrição do conteúdo',
       linkOrHandle: 'Link ou @',
       linkOrHandlePlaceholder: 'Ex: @seuperfil ou https://...',
       wantsToKnowNovoTempo: 'Desejo conhecer a estrutura da Novo Tempo.',
-      tourNt: 'Tour NT',
       flightDepartureTime: 'Horário voo ida',
       flightReturnTime: 'Horário voo volta',
       role: 'Função',
@@ -652,13 +669,6 @@ export const dictionaries: Record<Language, Dictionary> = {
       notFound: 'Inscrição não encontrada. Verifique o código e o e-mail.',
       fullName: 'Nome',
       institution: 'Instituição',
-      institutionGroup: 'Grupo',
-      group1: 'Grupo 1',
-      group2: 'Grupo 2',
-      group3: 'Grupo 3',
-      groupColorRed: 'Vermelho',
-      groupColorGreen: 'Verde',
-      groupColorBlue: 'Azul',
       registeredAt: 'Data da inscrição',
       workshopsTitle: 'Inscrição em workshops',
       workshopsSubtitle: 'Escolha até 3 workshops. Não é possível se inscrever no mesmo workshop mais de uma vez.',
@@ -705,6 +715,8 @@ export const dictionaries: Record<Language, Dictionary> = {
 
     errors: {
       requiredField: 'Este campo é obrigatório',
+      invalidDocumento: 'Documento inválido para o país e o tipo selecionados.',
+      documentAlreadyRegistered: 'Este documento já está inscrito',
       invalidEmail: 'E-mail inválido',
       invalidPhone: 'Telefone inválido',
       voucherNotFound: 'Voucher inválido ou indisponível',
@@ -983,9 +995,10 @@ export const dictionaries: Record<Language, Dictionary> = {
       plataforma: 'Plataforma',
       seguidores: 'Seguidores',
       documento: 'Documento',
+      documentType: 'Tipo de documento',
+      documentCountry: 'País do documento',
       conteudo: 'Conteúdo',
       linkOrHandle: 'Link ou @',
-      tourNt: 'Tour NT',
       flightDepartureTime: 'Horário voo ida',
       flightReturnTime: 'Horário voo volta',
       visitation: 'Visitação Novo Tempo',
@@ -1137,13 +1150,26 @@ export const dictionaries: Record<Language, Dictionary> = {
       seguidores: 'Seguidores',
       seguidoresPlaceholder: 'Ej: 10000',
       documento: 'Documento',
-      documentoPlaceholder: 'DNI, CPF o pasaporte',
+      documentoPlaceholder: 'Ingrese el número',
+      documentoHint: 'Seleccione el tipo de documento para ver el formato aceptado.',
+      documentoHintCpf: 'CPF con 11 dígitos.',
+      documentoHintDni: 'Solo números, en el formato del país.',
+      documentoHintCedula: 'Cédula de identidad del país seleccionado.',
+      documentoHintPassport: 'Letras y números del pasaporte (6 a 12 caracteres).',
+      documentoSelectCountryFirst: 'Seleccione el país del teléfono para informar el documento.',
+      documentType: 'Tipo de documento',
+      documentTypePlaceholder: 'Seleccione el tipo',
+      documentTypeOptions: {
+        cpf: 'CPF',
+        dni: 'DNI',
+        cedula: 'Cédula de identidad',
+        passport: 'Pasaporte',
+      },
       conteudo: 'Contenido',
       conteudoPlaceholder: 'Tipo o descripción del contenido',
       linkOrHandle: 'Link o @',
       linkOrHandlePlaceholder: 'Ej: @tuperfil o https://...',
       wantsToKnowNovoTempo: 'Deseo conocer la estructura de Nuevo Tiempo.',
-      tourNt: 'Tour NT',
       flightDepartureTime: 'Horario vuelo ida',
       flightReturnTime: 'Horario vuelo vuelta',
       role: 'Función',
@@ -1179,13 +1205,6 @@ export const dictionaries: Record<Language, Dictionary> = {
       notFound: 'Inscripción no encontrada. Verifique el código y el correo.',
       fullName: 'Nombre',
       institution: 'Institución',
-      institutionGroup: 'Grupo',
-      group1: 'Grupo 1',
-      group2: 'Grupo 2',
-      group3: 'Grupo 3',
-      groupColorRed: 'Rojo',
-      groupColorGreen: 'Verde',
-      groupColorBlue: 'Azul',
       registeredAt: 'Fecha de inscripción',
       workshopsTitle: 'Inscripción en talleres',
       workshopsSubtitle: 'Elija hasta 3 talleres. No puede inscribirse en el mismo taller más de una vez.',
@@ -1232,6 +1251,8 @@ export const dictionaries: Record<Language, Dictionary> = {
 
     errors: {
       requiredField: 'Este campo es obligatorio',
+      invalidDocumento: 'Documento inválido para el país y el tipo seleccionados.',
+      documentAlreadyRegistered: 'Este documento ya está inscrito',
       invalidEmail: 'Correo electrónico inválido',
       invalidPhone: 'Teléfono inválido',
       voucherNotFound: 'Voucher inválido o no disponible',
@@ -1510,9 +1531,10 @@ export const dictionaries: Record<Language, Dictionary> = {
         plataforma: 'Plataforma',
         seguidores: 'Seguidores',
         documento: 'Documento',
+        documentType: 'Tipo de documento',
+        documentCountry: 'País del documento',
         conteudo: 'Contenido',
         linkOrHandle: 'Link o @',
-        tourNt: 'Tour NT',
         flightDepartureTime: 'Horario vuelo ida',
         flightReturnTime: 'Horario vuelo vuelta',
         visitation: 'Visita Nuevo Tiempo',

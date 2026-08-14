@@ -14,15 +14,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle2, XCircle, AlertCircle, Loader2, Search, QrCode } from 'lucide-react';
 import Link from 'next/link';
 import { QRCodeSVG } from 'qrcode.react';
-import type { InstitutionGroup } from '@/lib/db';
-import { institutionGroupBannerClassNames } from '@/lib/institution-group-banner';
-
 interface StatusResult {
   status: 'confirmed' | 'canceled';
   fullName: string;
   email: string;
   institutionName: string;
-  institutionGroup?: InstitutionGroup;
   registrationCode: string;
   workshopIds?: string[];
 }
@@ -84,15 +80,11 @@ function ConsultaContent() {
         return;
       }
 
-      const g = data.institutionGroup;
-      const institutionGroup: InstitutionGroup | undefined =
-        g === 1 || g === 2 || g === 3 ? g : undefined;
       setResult({
         status: data.status,
         fullName: data.fullName,
         email: data.email,
         institutionName: data.institutionName ?? '',
-        institutionGroup,
         registrationCode: data.registrationCode,
         workshopIds: data.workshopIds ?? [],
       });
@@ -208,23 +200,6 @@ function ConsultaContent() {
                   <p className="font-medium text-gray-900">{result.institutionName}</p>
                 </div>
               )}
-              {result.institutionGroup !== undefined && (() => {
-                const gn = institutionGroupBannerClassNames(result.institutionGroup);
-                const idx = result.institutionGroup - 1;
-                const groupTitle = [t.checkStatus.group1, t.checkStatus.group2, t.checkStatus.group3][idx];
-                const colorName = [
-                  t.checkStatus.groupColorRed,
-                  t.checkStatus.groupColorGreen,
-                  t.checkStatus.groupColorBlue,
-                ][idx];
-                return (
-                  <div className={gn.box}>
-                    <p className={gn.label}>{t.checkStatus.institutionGroup}</p>
-                    <p className={gn.value}>{groupTitle}</p>
-                    <span className={gn.tag}>{colorName}</span>
-                  </div>
-                );
-              })()}
             </CardContent>
           </Card>
         )}

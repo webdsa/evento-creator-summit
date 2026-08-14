@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { deleteRegistration, getRegistrationById, updateRegistration } from '@/lib/db';
+import { validateDocument } from '@/lib/document';
 
 async function checkAuth(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -63,6 +64,10 @@ export async function PATCH(
     const campo = typeof body.campo === 'string' ? body.campo.trim() || undefined : undefined;
     const plataforma = typeof body.plataforma === 'string' ? body.plataforma.trim() || undefined : undefined;
     const documento = typeof body.documento === 'string' ? body.documento.trim() || undefined : undefined;
+    const documentCountry =
+      typeof body.document_country === 'string' ? body.document_country.trim() || undefined : undefined;
+    const documentType =
+      typeof body.document_type === 'string' ? body.document_type.trim() || undefined : undefined;
     const conteudo = typeof body.conteudo === 'string' ? body.conteudo.trim() || undefined : undefined;
     const linkOrHandle = typeof body.link_or_handle === 'string' ? body.link_or_handle.trim() || undefined : undefined;
     const flightDepartureTime =
@@ -73,7 +78,6 @@ export async function PATCH(
     const language = body.language === 'pt-BR' || body.language === 'es' ? body.language : undefined;
     const wantsToKnowNovoTempo =
       typeof body.wants_to_know_novo_tempo === 'boolean' ? body.wants_to_know_novo_tempo : undefined;
-    const tourNt = typeof body.tour_nt === 'boolean' ? body.tour_nt : undefined;
     const seguidores =
       typeof body.seguidores === 'number' && Number.isFinite(body.seguidores)
         ? body.seguidores
@@ -93,11 +97,25 @@ export async function PATCH(
     if (campo !== undefined) updates.campo = campo;
     if (plataforma !== undefined) updates.plataforma = plataforma;
     if (seguidores !== undefined && Number.isInteger(seguidores)) updates.seguidores = seguidores;
-    if (documento !== undefined) updates.documento = documento;
+    const nextCountry = documentCountry ?? registration.document_country ?? '';
+    const nextType = documentType ?? registration.document_type ?? '';
+    const nextNumber = documento ?? registration.documento ?? '';
+    if (nextCountry && nextType && nextNumber) {
+      const parsed = validateDocument(nextCountry, nextType, nextNumber);
+      if (!parsed.ok) {
+        return NextResponse.json({ error: 'invalidDocumento' }, { status: 400 });
+      }
+      updates.documento = parsed.value;
+      updates.document_country = parsed.country;
+      updates.document_type = parsed.type;
+    } else {
+      if (documento !== undefined) updates.documento = documento.toUpperCase();
+      if (documentCountry !== undefined) updates.document_country = documentCountry;
+      if (documentType !== undefined) updates.document_type = documentType;
+    }
     if (conteudo !== undefined) updates.conteudo = conteudo;
     if (linkOrHandle !== undefined) updates.link_or_handle = linkOrHandle;
     if (wantsToKnowNovoTempo !== undefined) updates.wants_to_know_novo_tempo = wantsToKnowNovoTempo;
-    if (tourNt !== undefined) updates.tour_nt = tourNt;
     if (flightDepartureTime !== undefined) updates.flight_departure_time = flightDepartureTime;
     if (flightReturnTime !== undefined) updates.flight_return_time = flightReturnTime;
     if (role !== undefined) updates.role = role;

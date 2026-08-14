@@ -50,7 +50,6 @@ export async function GET(request: NextRequest) {
       fullName: registration.full_name,
       email: registration.email,
       institutionName: registration.institution?.name ?? registration.institution_name ?? '',
-      institutionGroup: registration.institution?.group,
       registrationCode: registration.registration_code,
       createdAt: registration.created_at,
       workshopIds:
