@@ -26,6 +26,60 @@ function isPublicPath(pathname: string | null): boolean {
   return false;
 }
 
+function isNavActive(pathname: string | null, href: string) {
+  if (!pathname) return false;
+  if (href === '/') return pathname === '/';
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function navLinkClassName({
+  isActive,
+  isCta,
+  isPublic,
+  mobileMenu,
+}: {
+  isActive: boolean;
+  isCta: boolean;
+  isPublic: boolean;
+  mobileMenu?: boolean;
+}) {
+  const base = `min-h-[44px] flex items-center px-4 py-3 rounded-full text-sm font-medium transition-colors ${
+    mobileMenu ? 'w-full' : 'whitespace-nowrap shrink-0'
+  }`;
+
+  if (mobileMenu) {
+    if (isCta) {
+      return `${base} bg-ov-purple text-white border-[3px] border-ov-ink font-extrabold hover:bg-ov-purple-bright ${
+        isActive ? 'shadow-[2px_2px_0_#111] ring-2 ring-ov-purple-bright ring-offset-2' : 'shadow-[4px_4px_0_#111]'
+      }`;
+    }
+    if (isActive) {
+      return `${base} bg-violet-100 text-ov-purple font-extrabold border-[3px] border-ov-ink`;
+    }
+    return `${base} text-gray-900 hover:bg-gray-100`;
+  }
+
+  if (isPublic) {
+    if (isCta) {
+      return `${base} bg-white text-ov-purple border-[3px] border-ov-ink font-extrabold hover:bg-violet-50 ${
+        isActive ? 'shadow-[2px_2px_0_#111] ring-2 ring-white/80 ring-offset-2 ring-offset-transparent' : 'shadow-[4px_4px_0_#111]'
+      }`;
+    }
+    if (isActive) {
+      return `${base} relative text-white font-extrabold after:absolute after:left-4 after:right-4 after:bottom-1.5 after:h-[3px] after:rounded-full after:bg-white`;
+    }
+    return `${base} text-white/70 hover:bg-white/10 hover:text-white`;
+  }
+
+  if (isCta) {
+    return `${base} bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md hover:from-blue-600 hover:to-cyan-600`;
+  }
+  if (isActive) {
+    return `${base} bg-blue-100 text-blue-700 font-extrabold`;
+  }
+  return `${base} text-gray-600 hover:bg-gray-100 hover:text-gray-900`;
+}
+
 function NavLinks({
   navLinks,
   pathname,
@@ -42,29 +96,16 @@ function NavLinks({
   return (
     <>
       {navLinks.map(({ href, label }) => {
-        const isActive = pathname === href;
-        const isInscription = href === '/inscricao';
-        const baseClass = `min-h-[44px] flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${mobileMenu ? 'w-full' : ''}`;
-        const publicClass = isInscription
-          ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-orange-500/30 hover:from-amber-600 hover:to-orange-600'
-          : isActive
-            ? 'bg-white/20 text-white'
-            : 'text-white/90 hover:bg-white/10 hover:text-white';
-        const privateClass = isInscription
-          ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md hover:from-blue-600 hover:to-cyan-600'
-          : isActive
-            ? 'bg-blue-100 text-blue-700'
-            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900';
-        const mobileClass = isInscription
-          ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-orange-500/30 hover:from-amber-600 hover:to-orange-600'
-          : isActive
-            ? 'bg-gray-200 text-gray-900'
-            : 'text-gray-900 hover:bg-gray-100';
-        const className = `${baseClass} ${!mobileMenu ? 'whitespace-nowrap shrink-0' : ''} ${
-          mobileMenu ? mobileClass : isPublic ? publicClass : privateClass
-        }`;
+        const isActive = isNavActive(pathname, href);
+        const isCta = href === '/inscricao';
         return (
-          <Link key={href} href={href} className={className} onClick={onNavigate}>
+          <Link
+            key={href}
+            href={href}
+            className={navLinkClassName({ isActive, isCta, isPublic, mobileMenu })}
+            aria-current={isActive ? 'page' : undefined}
+            onClick={onNavigate}
+          >
             {label}
           </Link>
         );
@@ -133,10 +174,14 @@ export function Header() {
             </SheetTrigger>
             <SheetContent
               side="right"
-              className="bg-white border-gray-200"
+              className={
+                isPublic
+                  ? 'bg-white border-l-[3px] border-ov-ink'
+                  : 'bg-white border-gray-200'
+              }
             >
               <SheetHeader>
-                <SheetTitle className="text-gray-900">
+                <SheetTitle className="text-gray-900 font-display italic uppercase">
                   Menu
                 </SheetTitle>
               </SheetHeader>

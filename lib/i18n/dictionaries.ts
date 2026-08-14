@@ -150,6 +150,13 @@ export interface Dictionary {
     heroTitle: string;
     heroSubtitle: string;
     heroCta: string;
+    heroQuestion: string;
+    brandName: string;
+    missionForAll: string;
+    creatorsWithPurpose: string;
+    eventPill: string;
+    communityLabel: string;
+    communityPrompt: string;
     speakersTitle: string;
     speakersSubtitle: string;
     programTitle: string;
@@ -163,6 +170,7 @@ export interface Dictionary {
     footerWorkshops: string;
     footerInscription: string;
     footerCheckStatus: string;
+    footerChurchName: string;
     noSpeakers: string;
     noProgram: string;
     errorLoading: string;
@@ -571,7 +579,7 @@ export const dictionaries: Record<Language, Dictionary> = {
     },
 
     publicInscription: {
-      title: 'Inscrição Creators Summit 2026',
+      title: 'Inscrição',
       subtitle: 'Preencha o formulário para confirmar sua participação',
       enterVoucher: 'Digite seu código de voucher',
       voucherPlaceholder: 'Ex: A1B2C',
@@ -669,6 +677,13 @@ export const dictionaries: Record<Language, Dictionary> = {
       heroTitle: 'Creators Summit 2026',
       heroSubtitle: 'Evento de comunicação e tecnologia. De 16 a 18 de abril.',
       heroCta: 'Fazer inscrição',
+      heroQuestion: 'O que você gostaria que tivessem te contado antes de se tornar influencer?',
+      brandName: 'OneVoice27',
+      missionForAll: 'Missão para todos',
+      creatorsWithPurpose: 'Criadores com propósito',
+      eventPill: 'creator summit',
+      communityLabel: 'autorretrato',
+      communityPrompt: 'desenhe seu rosto, escreva seu @ e conecte-se com outras pessoas!',
       speakersTitle: 'Palestrantes',
       speakersSubtitle: 'Conheça quem vai compartilhar conhecimento no evento.',
       programTitle: 'Programa',
@@ -682,6 +697,7 @@ export const dictionaries: Record<Language, Dictionary> = {
       footerWorkshops: 'Workshops',
       footerInscription: 'Inscrição',
       footerCheckStatus: 'Consultar Inscrição',
+      footerChurchName: 'Igreja Adventista do Sétimo Dia',
       noSpeakers: 'Nenhum palestrante cadastrado no momento.',
       noProgram: 'Nenhuma atividade cadastrada para este dia.',
       errorLoading: 'Erro ao carregar. Tente novamente.',
@@ -1090,7 +1106,7 @@ export const dictionaries: Record<Language, Dictionary> = {
     },
 
     publicInscription: {
-      title: 'Inscripción Creators Summit 2026',
+      title: 'Inscripción',
       subtitle: 'Complete el formulario para confirmar su participación',
       enterVoucher: 'Ingrese su código de voucher',
       voucherPlaceholder: 'Ej: A1B2C',
@@ -1188,6 +1204,13 @@ export const dictionaries: Record<Language, Dictionary> = {
       heroTitle: 'Creators Summit 2026',
       heroSubtitle: 'Evento de comunicación y tecnología. Del 16 al 18 de abril.',
       heroCta: 'Inscribirse',
+      heroQuestion: '¿Qué te gustaría que te hubieran contado antes de convertirte en influencer?',
+      brandName: 'OneVoice27',
+      missionForAll: 'Misión para todos',
+      creatorsWithPurpose: 'Creadores con propósito',
+      eventPill: 'creator summit',
+      communityLabel: 'autorretrato',
+      communityPrompt: '¡dibuja tu rostro, escribe tu @ y conéctate con otras personas!',
       speakersTitle: 'Expositores',
       speakersSubtitle: 'Conozca a quienes compartirán conocimiento en el evento.',
       programTitle: 'Programa',
@@ -1201,6 +1224,7 @@ export const dictionaries: Record<Language, Dictionary> = {
       footerWorkshops: 'Talleres',
       footerInscription: 'Inscripción',
       footerCheckStatus: 'Consultar Inscripción',
+      footerChurchName: 'Iglesia Adventista del Séptimo Día',
       noSpeakers: 'Ningún expositor registrado en este momento.',
       noProgram: 'Ninguna actividad registrada para este día.',
       errorLoading: 'Error al cargar. Intente de nuevo.',

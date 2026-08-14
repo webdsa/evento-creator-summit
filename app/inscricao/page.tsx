@@ -6,6 +6,7 @@ import { useLanguage } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthProvider';
 import { Header } from '@/components/Header';
 import { PublicFooter } from '@/components/PublicFooter';
+import { PublicPageHeader } from '@/components/brand/PublicPageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -646,14 +647,13 @@ function InscricaoContent() {
     <div className="public-area page-inscricao min-h-screen min-w-0 overflow-x-hidden flex flex-col">
       <Header />
       <main className="flex-1 flex flex-col justify-center container max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
-        <div className="text-center mb-8 sm:mb-12 animate-fade-in">
-          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 gradient-text-hero px-1">
-            {t.publicInscription.title}
-          </h1>
-          <p className="text-base sm:text-lg text-white/90 max-w-2xl mx-auto px-1">
-            {t.publicInscription.subtitle}
-          </p>
-        </div>
+        <PublicPageHeader
+          size="page"
+          icon="heart"
+          kicker={t.landing.heroTitle}
+          title={t.publicInscription.title}
+          subtitle={t.publicInscription.subtitle}
+        />
 
         {!voucherValidation?.valid && (
           <div className="animate-slide-up">

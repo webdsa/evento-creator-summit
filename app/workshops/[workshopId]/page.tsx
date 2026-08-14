@@ -97,10 +97,10 @@ function WorkshopDetailContent() {
       <div className="public-area page-workshop-detail min-h-screen min-w-0 overflow-x-hidden flex flex-col">
         <Header />
         <main className="flex-1 flex flex-col justify-center container max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
-          <Card className="bg-white/15 backdrop-blur-md border-2 border-dashed border-white/30">
+          <Card className="glass-card">
             <CardContent className="py-12 text-center">
-              <p className="text-white/90 mb-4">{t.errors.notFound}</p>
-              <Button variant="outline" asChild className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
+              <p className="text-gray-700 mb-4">{t.errors.notFound}</p>
+              <Button variant="outline" asChild className="border-[2px] border-ov-ink bg-white text-ov-ink hover:bg-violet-50">
                 <Link href="/workshops">{t.publicWorkshops.backToWorkshops}</Link>
               </Button>
             </CardContent>
@@ -119,7 +119,7 @@ function WorkshopDetailContent() {
             variant="outline"
             size="sm"
             asChild
-            className="gap-1 -ml-2 border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+            className="gap-1 -ml-2 border-[2px] border-white bg-transparent text-white hover:bg-white/10 hover:text-white"
           >
             <Link href="/workshops">
               <ArrowLeft className="h-4 w-4" />
@@ -143,7 +143,7 @@ function WorkshopDetailContent() {
 
         {!loading && !error && workshop && (
           <div className="space-y-8 animate-fade-in">
-            <Card className="bg-white/15 backdrop-blur-md border border-white/30 shadow-lg overflow-hidden">
+            <Card className="glass-card overflow-hidden">
               <CardHeader className="pb-4 sm:pb-5">
                 <div className="flex flex-wrap items-center gap-2 mb-3">
                   <Badge
@@ -158,12 +158,12 @@ function WorkshopDetailContent() {
                       : t.publicWorkshops.typeWorkshop}
                   </Badge>
                 </div>
-                <CardTitle className="text-2xl sm:text-3xl flex items-start gap-3 leading-tight text-white">
-                  <BookOpen className="h-7 w-7 sm:h-8 sm:w-8 text-violet-300 shrink-0 mt-0.5" />
+                <CardTitle className="text-2xl sm:text-3xl flex items-start gap-3 leading-tight text-ov-ink">
+                  <BookOpen className="h-7 w-7 sm:h-8 sm:w-8 text-ov-purple shrink-0 mt-0.5" />
                   <span className="break-words">{displayTitle}</span>
                 </CardTitle>
                 {workshop.speakerNames && (
-                  <CardDescription className="text-base sm:text-lg flex items-center gap-2 mt-3 text-white/90">
+                  <CardDescription className="text-base sm:text-lg flex items-center gap-2 mt-3 text-gray-600">
                     <Users className="h-4 w-4 shrink-0" />
                     {t.publicWorkshops.speakers}: {workshop.speakerNames}
                   </CardDescription>
@@ -171,8 +171,8 @@ function WorkshopDetailContent() {
               </CardHeader>
               {displayDescription && (
                 <CardContent className="pt-0 pb-6 sm:pb-8">
-                  <div className="rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 p-5 sm:p-6">
-                    <p className="text-white/90 text-base sm:text-lg leading-relaxed whitespace-pre-wrap break-words max-w-none">
+                  <div className="rounded-xl bg-violet-50 border-2 border-ov-ink p-5 sm:p-6">
+                    <p className="text-gray-700 text-base sm:text-lg leading-relaxed whitespace-pre-wrap break-words max-w-none">
                       {displayDescription}
                     </p>
                   </div>
@@ -181,10 +181,10 @@ function WorkshopDetailContent() {
             </Card>
 
             {workshop.speakers && workshop.speakers.length > 0 && (
-              <Card className="bg-white/15 backdrop-blur-md border border-white/30 shadow-lg">
+              <Card className="glass-card">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg sm:text-xl flex items-center gap-2 text-white">
-                    <Users className="h-5 w-5 text-violet-300" />
+                  <CardTitle className="text-lg sm:text-xl flex items-center gap-2 text-ov-ink">
+                    <Users className="h-5 w-5 text-ov-purple" />
                     {t.publicWorkshops.speakers}
                   </CardTitle>
                 </CardHeader>
@@ -192,9 +192,9 @@ function WorkshopDetailContent() {
                   {workshop.speakers.map((speaker) => (
                     <div
                       key={speaker.id}
-                      className="flex flex-col sm:flex-row gap-4 p-4 sm:p-5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20"
+                      className="flex flex-col sm:flex-row gap-4 p-4 sm:p-5 rounded-xl bg-violet-50 border-2 border-ov-ink"
                     >
-                      <div className="w-full sm:w-36 shrink-0 rounded-xl border-2 border-white/30 shadow-md overflow-hidden [aspect-ratio:1/1]">
+                      <div className="w-full sm:w-36 shrink-0 rounded-xl border-[3px] border-ov-ink shadow-md overflow-hidden [aspect-ratio:1/1]">
                         <Avatar className="h-full w-full rounded-xl">
                           <AvatarImage src={speaker.photo} alt={speaker.name} className="object-cover h-full w-full" />
                           <AvatarFallback className="rounded-xl bg-violet-500/30 text-violet-200 text-xl font-semibold h-full w-full">
@@ -208,9 +208,9 @@ function WorkshopDetailContent() {
                         </Avatar>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h4 className="font-semibold text-white text-xl mb-1">{speaker.name}</h4>
+                        <h4 className="font-semibold text-ov-ink text-xl mb-1">{speaker.name}</h4>
                         {speaker.biography && (
-                          <p className="text-white/90 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
+                          <p className="text-gray-700 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
                             {speaker.biography}
                           </p>
                         )}
@@ -226,7 +226,7 @@ function WorkshopDetailContent() {
                 asChild
                 variant="outline"
                 size="lg"
-                className="shadow-sm border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+                className="shadow-sm border-[2px] border-white bg-transparent text-white hover:bg-white/10 hover:text-white"
               >
                 <Link href="/workshops">
                   <ArrowLeft className="h-4 w-4 mr-2" />

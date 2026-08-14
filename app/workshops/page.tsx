@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/lib/i18n';
 import { Header } from '@/components/Header';
 import { PublicFooter } from '@/components/PublicFooter';
+import { PublicPageHeader } from '@/components/brand/PublicPageHeader';
 import { SHOW_WORKSHOPS_PUBLIC } from '@/lib/env-public';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -104,14 +105,11 @@ function WorkshopsContent() {
     <div className="public-area page-workshops min-h-screen min-w-0 overflow-x-hidden flex flex-col">
       <Header />
       <main className="flex-1 flex flex-col justify-center container max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
-        <div className="text-center mb-8 sm:mb-12 animate-fade-in">
-          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 gradient-text-hero px-1">
-            {t.publicWorkshops.title}
-          </h1>
-          <p className="text-base sm:text-lg text-white/90 max-w-2xl mx-auto px-1">
-            {t.publicWorkshops.subtitle}
-          </p>
-        </div>
+        <PublicPageHeader
+          icon="smile"
+          title={t.publicWorkshops.title}
+          subtitle={t.publicWorkshops.subtitle}
+        />
 
         {loading && (
           <div className="flex justify-center py-16">
@@ -127,8 +125,8 @@ function WorkshopsContent() {
         )}
 
         {!loading && !error && grouped.length === 0 && (
-          <Card className="bg-white/15 backdrop-blur-md">
-            <CardContent className="py-12 text-center text-white/90">
+          <Card className="glass-card">
+            <CardContent className="py-12 text-center text-gray-700">
               {t.publicWorkshops.noWorkshops}
             </CardContent>
           </Card>
@@ -139,7 +137,7 @@ function WorkshopsContent() {
             {grouped.map((workshop) => (
               <Card
                 key={workshop.workshopId}
-                className="bg-white/15 backdrop-blur-md shadow-lg hover:shadow-xl hover:border-white/50 transition-all duration-200 overflow-hidden"
+                className="glass-card overflow-hidden"
               >
                 <CardHeader className="pb-3 sm:pb-4">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -157,18 +155,18 @@ function WorkshopsContent() {
                             : t.publicWorkshops.typeWorkshop}
                         </Badge>
                       </div>
-                      <CardTitle className="text-xl sm:text-2xl break-words flex items-start gap-2 leading-tight text-white">
-                        <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-violet-300 shrink-0 mt-0.5" />
+                      <CardTitle className="text-xl sm:text-2xl break-words flex items-start gap-2 leading-tight text-ov-ink">
+                        <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-ov-purple shrink-0 mt-0.5" />
                         {displayTitle(workshop)}
                       </CardTitle>
                       {workshop.speakerNames && (
-                        <CardDescription className="text-sm sm:text-base text-white/90">
+                        <CardDescription className="text-sm sm:text-base text-gray-600">
                           {t.publicWorkshops.speakers}: {workshop.speakerNames}
                         </CardDescription>
                       )}
                     </div>
                     <Link href={`/workshops/${workshop.workshopId}`} className="shrink-0 self-start sm:self-center">
-                      <Button variant="outline" size="sm" className="gap-1.5 border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
+                      <Button variant="outline" size="sm" className="gap-1.5 border-[2px] border-ov-ink bg-white text-ov-ink hover:bg-violet-50">
                         {t.publicWorkshops.seeDetails}
                         <ChevronRight className="h-4 w-4" />
                       </Button>
@@ -177,8 +175,8 @@ function WorkshopsContent() {
                 </CardHeader>
                 {displayDescription(workshop) && (
                   <CardContent className="pt-0 pb-4">
-                    <div className="rounded-lg bg-white/10 backdrop-blur-sm p-4 sm:p-5">
-                      <p className="text-sm sm:text-base text-white/90 leading-relaxed whitespace-pre-wrap break-words">
+                    <div className="rounded-lg bg-violet-50 p-4 sm:p-5 border-2 border-ov-ink">
+                      <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
                         {displayDescription(workshop)}
                       </p>
                     </div>

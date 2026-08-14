@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useLanguage } from '@/lib/i18n';
 import { Header } from '@/components/Header';
 import { PublicFooter } from '@/components/PublicFooter';
+import { PublicPageHeader } from '@/components/brand/PublicPageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -106,14 +107,11 @@ function ConsultaContent() {
     <div className="public-area page-consulta min-h-screen min-w-0 overflow-x-hidden flex flex-col">
       <Header />
       <main className="flex-1 flex flex-col justify-center container max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
-        <div className="text-center mb-6 sm:mb-10">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 gradient-text-hero px-1">
-            {t.checkStatus.title}
-          </h1>
-          {!result && (
-            <p className="text-sm sm:text-base text-white/90 px-1">{t.checkStatus.subtitle}</p>
-          )}
-        </div>
+        <PublicPageHeader
+          icon="search"
+          title={t.checkStatus.title}
+          subtitle={result ? undefined : t.checkStatus.subtitle}
+        />
 
         {!result && (
           <Card className="glass-card shadow-xl border-2 border-white/30 mb-4 sm:mb-6">
@@ -252,7 +250,7 @@ function ConsultaContent() {
         )}
 
         <p className="text-center mt-6 sm:mt-8 text-sm text-white/90 px-2">
-          <Link href="/inscricao" className="text-amber-300 hover:text-white hover:underline">
+          <Link href="/inscricao" className="text-white font-extrabold underline underline-offset-4 hover:text-violet-200">
             Fazer nova inscrição
           </Link>
         </p>

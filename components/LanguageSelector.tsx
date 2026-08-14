@@ -20,7 +20,7 @@ export function LanguageSelector({ theme = 'light' }: LanguageSelectorProps) {
     <div
       className={
         isDark
-          ? 'flex items-center gap-0.5 sm:gap-1 bg-white/10 backdrop-blur-sm rounded-lg sm:rounded-xl p-1 sm:p-1.5'
+          ? 'flex items-center gap-0.5 sm:gap-1 bg-white rounded-full p-1 sm:p-1.5 border-[3px] border-ov-ink shadow-[3px_3px_0_#111]'
           : 'flex items-center gap-0.5 sm:gap-1 bg-white/50 backdrop-blur-sm rounded-lg sm:rounded-xl p-1 sm:p-1.5'
       }
     >
@@ -31,10 +31,10 @@ export function LanguageSelector({ theme = 'light' }: LanguageSelectorProps) {
         className={`min-h-[44px] h-9 sm:h-8 px-2.5 sm:px-3 border-0 shadow-none transition-all duration-300 ${
           language === 'pt-BR'
             ? isDark
-              ? 'bg-white/20 text-white hover:bg-white/30'
+              ? 'bg-ov-purple text-white hover:bg-ov-purple-bright rounded-full'
               : 'bg-white/80 text-gray-900 hover:bg-white'
             : isDark
-              ? 'text-white/80 hover:bg-white/10 hover:text-white opacity-70 hover:opacity-100'
+              ? 'text-ov-ink hover:bg-violet-100 hover:text-ov-ink opacity-70 hover:opacity-100 rounded-full'
               : 'text-gray-600 hover:bg-white/70 hover:text-gray-900 opacity-70 hover:opacity-100'
         }`}
         title="Português"
@@ -50,10 +50,10 @@ export function LanguageSelector({ theme = 'light' }: LanguageSelectorProps) {
         className={`min-h-[44px] h-9 sm:h-8 px-2.5 sm:px-3 border-0 shadow-none transition-all duration-300 ${
           language === 'es'
             ? isDark
-              ? 'bg-white/20 text-white hover:bg-white/30'
+              ? 'bg-ov-purple text-white hover:bg-ov-purple-bright rounded-full'
               : 'bg-white/80 text-gray-900 hover:bg-white'
             : isDark
-              ? 'text-white/80 hover:bg-white/10 hover:text-white opacity-70 hover:opacity-100'
+              ? 'text-ov-ink hover:bg-violet-100 hover:text-ov-ink opacity-70 hover:opacity-100 rounded-full'
               : 'text-gray-600 hover:bg-white/70 hover:text-gray-900 opacity-70 hover:opacity-100'
         }`}
         title="Español"
