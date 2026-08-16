@@ -21,5 +21,6 @@ export async function GET(request: NextRequest) {
     ok: true,
     mustChangePassword: !admin.hasChangedPassword,
     role: admin.role,
+    institution_id: admin.institution_id ?? null,
   });
 }

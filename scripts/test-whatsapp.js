@@ -10,10 +10,11 @@
  *   node scripts/test-whatsapp.js 61999998888
  *   node scripts/test-whatsapp.js 61999998888 eli.mendonca@adventistas.org ASASD
  *
- * Template ID: 959492029749455 (pt) – 2 parâmetros: {{1}} = email, {{2}} = código da inscrição
+ * Template: UNNICHAT_TEMPLATE_ID_PT (padrão) ou UNNICHAT_TEMPLATE_ID_ES com --es
+ * 2 parâmetros: {{1}} = email, {{2}} = código da inscrição
  *
- * Requer .env: UNNICHAT_API_BASE_URL, UNNICHAT_API_KEY
- * Opcional: UNNICHAT_AUTH_HEADER=X-Api-Key (se não usar Bearer)
+ * Requer .env: UNNICHAT_API_BASE_URL, UNNICHAT_API_KEY, UNNICHAT_TEMPLATE_ID_PT
+ * Opcional: UNNICHAT_TEMPLATE_ID_ES, UNNICHAT_AUTH_HEADER=X-Api-Key (se não usar Bearer)
  */
 
 const path = require('path');
@@ -60,14 +61,16 @@ async function main() {
     process.exit(1);
   }
 
-  const phoneArg = process.argv[2];
-  const emailArg = process.argv[3];
-  const inscricaoArg = process.argv[4];
+  const args = process.argv.slice(2).filter((a) => a !== '--es');
+  const useEs = process.argv.includes('--es');
+  const phoneArg = args[0];
+  const emailArg = args[1];
+  const inscricaoArg = args[2];
 
   if (!phoneArg) {
-    console.error('Uso: node scripts/test-whatsapp.js <número> [email] [código_inscrição]\n');
+    console.error('Uso: node scripts/test-whatsapp.js <número> [email] [código_inscrição] [--es]\n');
     console.error('Exemplo: node scripts/test-whatsapp.js 61999998888');
-    console.error('Exemplo: node scripts/test-whatsapp.js 61999998888 eli.mendonca@adventistas.org ASASD');
+    console.error('Exemplo: node scripts/test-whatsapp.js 61999998888 eli.mendonca@adventistas.org ASASD --es');
     process.exit(1);
   }
 
@@ -77,7 +80,12 @@ async function main() {
     process.exit(1);
   }
 
-  const templateId = '959492029749455';
+  const templateEnv = useEs ? 'UNNICHAT_TEMPLATE_ID_ES' : 'UNNICHAT_TEMPLATE_ID_PT';
+  const templateId = process.env[templateEnv]?.trim();
+  if (!templateId) {
+    console.error(`Erro: defina ${templateEnv} no .env`);
+    process.exit(1);
+  }
   const email = emailArg && emailArg.trim() ? emailArg.trim() : 'eli.mendonca@adventistas.org';
   const inscricao = inscricaoArg && inscricaoArg.trim() ? inscricaoArg.trim() : 'ASASD';
 

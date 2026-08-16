@@ -62,7 +62,11 @@ interface Registration {
   link_or_handle?: string;
   wants_to_know_novo_tempo?: boolean;
   flight_departure_time?: string;
+  flight_departure_airline?: string;
+  flight_departure_number?: string;
   flight_return_time?: string;
+  flight_return_airline?: string;
+  flight_return_number?: string;
   role?: string;
   language: string;
   status: 'confirmed' | 'canceled';
@@ -84,7 +88,8 @@ interface Registration {
 export default function RegistrationsPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const { user, getIdToken } = useAuth();
+  const { user, getIdToken, role } = useAuth();
+  const isSecretaria = role === 'secretaria';
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [filteredRegistrations, setFilteredRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
@@ -333,7 +338,11 @@ export default function RegistrationsPage() {
         [t.admin.registrations.linkOrHandle]: reg.link_or_handle ?? '',
         [t.admin.registrations.visitation]:
           reg.wants_to_know_novo_tempo === true ? t.common.yes : t.common.no,
+        [t.admin.registrations.flightDepartureAirline]: reg.flight_departure_airline ?? '',
+        [t.admin.registrations.flightDepartureNumber]: reg.flight_departure_number ?? '',
         [t.admin.registrations.flightDepartureTime]: reg.flight_departure_time ?? '',
+        [t.admin.registrations.flightReturnAirline]: reg.flight_return_airline ?? '',
+        [t.admin.registrations.flightReturnNumber]: reg.flight_return_number ?? '',
         [t.admin.registrations.flightReturnTime]: reg.flight_return_time ?? '',
         [t.admin.registrations.role]: reg.role ?? '',
         'ID Instituição': reg.institution_id ?? '',
@@ -389,6 +398,7 @@ export default function RegistrationsPage() {
                   className="h-9"
                 />
               </div>
+              {!isSecretaria && (
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-gray-700">
                   {t.admin.registrations.institution}
@@ -410,6 +420,7 @@ export default function RegistrationsPage() {
                   </SelectContent>
                 </Select>
               </div>
+              )}
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-gray-700">
                   {t.admin.registrations.role}

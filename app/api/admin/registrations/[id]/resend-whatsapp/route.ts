@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { canAccessRegistration, requireRegistrationsAccess } from '@/lib/auth';
 import { getRegistrationById } from '@/lib/db';
 import { sendRegistrationWhatsApp } from '@/lib/whatsapp';
 import type { Language } from '@/lib/whatsapp';
@@ -8,9 +8,10 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let staff;
   try {
     const authHeader = request.headers.get('authorization');
-    await requireAdmin(authHeader);
+    staff = await requireRegistrationsAccess(authHeader);
   } catch {
     return NextResponse.json(
       { error: 'unauthorized' },
@@ -25,7 +26,7 @@ export async function POST(
     }
     const registration = await getRegistrationById(id);
 
-    if (!registration) {
+    if (!registration || !canAccessRegistration(staff, registration.institution_id)) {
       return NextResponse.json(
         { error: 'notFound' },
         { status: 404 }

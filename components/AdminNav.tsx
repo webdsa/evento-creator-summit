@@ -14,6 +14,8 @@ export function AdminNav() {
   const { signOut, role } = useAuth();
 
   const isCheckinOnly = role === 'checkin';
+  const isSecretaria = role === 'secretaria';
+  const homeHref = isCheckinOnly ? '/admin/checkin' : isSecretaria ? '/admin/registrations' : '/admin';
 
   const navItemsLeftFull = [
     { href: '/admin', label: t.admin.nav.dashboard, icon: LayoutDashboard },
@@ -32,9 +34,11 @@ export function AdminNav() {
 
   const navItemsLeft = isCheckinOnly
     ? [{ href: '/admin/checkin', label: t.admin.nav.checkin, icon: QrCode }]
-    : navItemsLeftFull;
+    : isSecretaria
+      ? [{ href: '/admin/registrations', label: t.admin.nav.registrations, icon: Users }]
+      : navItemsLeftFull;
 
-  const navItemsRight = isCheckinOnly ? [] : navItemsRightFull;
+  const navItemsRight = isCheckinOnly || isSecretaria ? [] : navItemsRightFull;
 
   const renderNavButton = (item: (typeof navItemsLeft)[0]) => {
     const Icon = item.icon;
@@ -57,7 +61,7 @@ export function AdminNav() {
     <header className="sticky top-0 z-50 w-full border-b bg-white">
       <div className="w-full flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-6">
-          <Link href={isCheckinOnly ? '/admin/checkin' : '/admin'} className="flex items-center gap-2">
+          <Link href={homeHref} className="flex items-center gap-2">
             <h1 className="text-xl font-bold tracking-tight">
               {t.common.appName}
             </h1>

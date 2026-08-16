@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthProvider';
+import { isSecretariaPathAllowed, staffHomePath } from '@/lib/admin-roles';
 import { AdminNav } from './AdminNav';
 import { Loader2 } from 'lucide-react';
 
@@ -24,15 +25,18 @@ export function AdminProtected({ children }: { children: React.ReactNode }) {
   }, [user, loading, mustChangePassword, pathname, router]);
 
   useEffect(() => {
-    if (
-      !loading &&
-      user &&
-      mustChangePassword === false &&
-      role === 'checkin' &&
-      pathname !== '/admin/checkin' &&
-      pathname !== '/admin/settings'
-    ) {
-      router.replace('/admin/checkin');
+    if (!loading && user && mustChangePassword === false && role === 'checkin') {
+      if (pathname !== '/admin/checkin' && pathname !== '/admin/settings') {
+        router.replace(staffHomePath(role));
+      }
+    }
+  }, [user, loading, mustChangePassword, role, pathname, router]);
+
+  useEffect(() => {
+    if (!loading && user && mustChangePassword === false && role === 'secretaria') {
+      if (!isSecretariaPathAllowed(pathname)) {
+        router.replace(staffHomePath(role));
+      }
     }
   }, [user, loading, mustChangePassword, role, pathname, router]);
 

@@ -6,6 +6,7 @@ import { useLanguage } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
 import { useAuth } from '@/lib/AuthProvider';
+import { staffHomePath } from '@/lib/admin-roles';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +17,7 @@ import { Loader2, AlertCircle } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const { t } = useLanguage();
-  const { user, loading: authLoading, signIn } = useAuth();
+  const { user, loading: authLoading, role, signIn } = useAuth();
   const router = useRouter();
 
   const [email, setEmail] = useState('');
@@ -25,10 +26,10 @@ export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (user && !authLoading) {
-      router.push('/admin');
+    if (user && !authLoading && role) {
+      router.push(staffHomePath(role));
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, role, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

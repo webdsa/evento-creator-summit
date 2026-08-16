@@ -225,7 +225,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Criar contato no Unnichat (POST /contact) com tag por idioma (MidiaTecPT ou MidiaTecES)
+    // Criar contato no Unnichat (POST /contact) com tag por idioma (UNNICHAT_TAG_PT ou UNNICHAT_TAG_ES)
     const contactResult = await createUnnichatContact({
       phone: registration.phone,
       fullName: registration.full_name,

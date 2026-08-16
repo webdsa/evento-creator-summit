@@ -317,3 +317,139 @@ export async function sendConfirmationEmail(
   }
   return sendViaSendGrid(registration.email, from, subject, html);
 }
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * Envia e-mail com URL de acesso, e-mail e senha para um usuário recém-criado no painel.
+ */
+export async function sendStaffAccessEmail(params: {
+  email: string;
+  password: string;
+  loginUrl: string;
+  language?: Language;
+}): Promise<{ sent: true } | { sent: false; error: string }> {
+  const provider = getEmailProvider();
+  if (!provider) {
+    return { sent: false, error: 'Nenhum provedor de e-mail configurado (SENDGRID_API_KEY ou RESEND_API_KEY)' };
+  }
+
+  const email = escapeHtml(params.email);
+  const password = escapeHtml(params.password);
+  const loginUrl = escapeHtml(params.loginUrl);
+  const lang = params.language === 'es' ? 'es' : 'pt-BR';
+  const subject =
+    lang === 'es'
+      ? 'Acceso al panel — Creators Summit 2026'
+      : 'Acesso ao painel — Creators Summit 2026';
+  const html =
+    lang === 'es'
+      ? `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #2563eb; color: white; padding: 20px; text-align: center; }
+    .content { background: #f9fafb; padding: 30px; }
+    .details { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; }
+    .detail-row { padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+    .detail-label { font-weight: bold; color: #6b7280; }
+    .footer { text-align: center; color: #6b7280; padding: 20px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Creators Summit 2026</h1>
+    </div>
+    <div class="content">
+      <h2>Su acceso al panel está listo</h2>
+      <p>Se creó un usuario para que acceda al panel de administración.</p>
+      <div class="details">
+        <div class="detail-row">
+          <span class="detail-label">URL de acceso:</span><br>
+          <a href="${loginUrl}" style="color: #2563eb;">${loginUrl}</a>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Correo electrónico:</span> ${email}
+        </div>
+        <div class="detail-row" style="border-bottom: none;">
+          <span class="detail-label">Contraseña:</span> ${password}
+        </div>
+      </div>
+      <p style="text-align: center; margin: 24px 0;">
+        <a href="${loginUrl}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Abrir el panel</a>
+      </p>
+      <p style="font-size: 14px; color: #6b7280;">Por seguridad, le recomendamos cambiar la contraseña después del primer acceso.</p>
+    </div>
+    <div class="footer">
+      <p>Este es un correo automático. Por favor, no responda.</p>
+    </div>
+  </div>
+</body>
+</html>
+      `.trim()
+      : `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #2563eb; color: white; padding: 20px; text-align: center; }
+    .content { background: #f9fafb; padding: 30px; }
+    .details { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; }
+    .detail-row { padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+    .detail-label { font-weight: bold; color: #6b7280; }
+    .footer { text-align: center; color: #6b7280; padding: 20px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Creators Summit 2026</h1>
+    </div>
+    <div class="content">
+      <h2>Seu acesso ao painel está pronto</h2>
+      <p>Foi criado um usuário para você acessar o painel de administração.</p>
+      <div class="details">
+        <div class="detail-row">
+          <span class="detail-label">URL de acesso:</span><br>
+          <a href="${loginUrl}" style="color: #2563eb;">${loginUrl}</a>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">E-mail:</span> ${email}
+        </div>
+        <div class="detail-row" style="border-bottom: none;">
+          <span class="detail-label">Senha:</span> ${password}
+        </div>
+      </div>
+      <p style="text-align: center; margin: 24px 0;">
+        <a href="${loginUrl}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Abrir o painel</a>
+      </p>
+      <p style="font-size: 14px; color: #6b7280;">Por segurança, recomendamos alterar a senha após o primeiro acesso.</p>
+    </div>
+    <div class="footer">
+      <p>Este é um e-mail automático. Por favor, não responda.</p>
+    </div>
+  </div>
+</body>
+</html>
+      `.trim();
+
+  const from = getFromEmail(provider);
+  if (provider === 'resend') {
+    return sendViaResend(params.email, from, subject, html);
+  }
+  return sendViaSendGrid(params.email, from, subject, html);
+}

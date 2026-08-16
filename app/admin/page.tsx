@@ -50,8 +50,8 @@ export default function AdminDashboardPage() {
   const d = t?.admin?.dashboard ?? FALLBACK_DASHBOARD;
 
   useEffect(() => {
-    if (!user || role === 'checkin') {
-      if (user && role === 'checkin') {
+    if (!user || role === 'checkin' || role === 'secretaria') {
+      if (user && (role === 'checkin' || role === 'secretaria')) {
         setLoading(false);
         setStatsError(false);
       }

@@ -12,16 +12,19 @@ import {
   EmailAuthProvider,
 } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import type { AdminRole } from './admin-roles';
 
-export type AdminRole = 'admin' | 'checkin';
+export type { AdminRole };
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   /** true = must change password before using app; false = ok; null = not loaded yet */
   mustChangePassword: boolean | null;
-  /** 'admin' | 'checkin' | null (null = not loaded or not staff) */
+  /** 'admin' | 'checkin' | 'secretaria' | null (null = not loaded or not staff) */
   role: AdminRole | null;
+  /** Instituição vinculada (perfil secretaria). */
+  institutionId: string | null;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   getIdToken: () => Promise<string | null>;
@@ -32,6 +35,7 @@ interface AuthContextType {
   refreshAdminStatus: () => Promise<{
     mustChangePassword: boolean;
     role: AdminRole;
+    institutionId: string | null;
   } | null>;
 }
 
@@ -39,7 +43,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 async function fetchAdminMe(
   token: string
-): Promise<{ ok: boolean; mustChangePassword?: boolean; role?: AdminRole }> {
+): Promise<{
+  ok: boolean;
+  mustChangePassword?: boolean;
+  role?: AdminRole;
+  institution_id?: string | null;
+}> {
   const res = await fetch('/api/admin/me', {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -52,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [mustChangePassword, setMustChangePassword] = useState<boolean | null>(null);
   const [role, setRole] = useState<AdminRole | null>(null);
+  const [institutionId, setInstitutionId] = useState<string | null>(null);
   const router = useRouter();
 
   const refreshAdminStatus = async () => {
@@ -62,16 +72,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!data.ok) {
         setMustChangePassword(false);
         setRole(null);
+        setInstitutionId(null);
         return null;
       }
       const m = data.mustChangePassword ?? false;
       const r = data.role ?? 'admin';
+      const inst = data.institution_id ?? null;
       setMustChangePassword(m);
       setRole(r);
-      return { mustChangePassword: m, role: r };
+      setInstitutionId(inst);
+      return { mustChangePassword: m, role: r, institutionId: inst };
     } catch {
       setMustChangePassword(false);
       setRole(null);
+      setInstitutionId(null);
       return null;
     }
   };
@@ -83,6 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
       setMustChangePassword(u ? null : null);
       setRole(u ? null : null);
+      setInstitutionId(u ? null : null);
     });
     return () => unsubscribe();
   }, []);
@@ -98,14 +113,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!data.ok) {
         setMustChangePassword(false);
         setRole(null);
+        setInstitutionId(null);
         return;
       }
       setMustChangePassword(data.mustChangePassword ?? false);
       setRole(data.role ?? 'admin');
+      setInstitutionId(data.institution_id ?? null);
     }).catch(() => {
       if (!cancelled) {
         setMustChangePassword(false);
         setRole(null);
+        setInstitutionId(null);
       }
     });
     return () => {
@@ -173,6 +191,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     mustChangePassword,
     role,
+    institutionId,
     signIn,
     signOut,
     getIdToken,

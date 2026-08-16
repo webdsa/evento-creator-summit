@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { canAccessRegistration, requireRegistrationsAccess, type StaffAccess } from '@/lib/auth';
 import { deleteRegistration, getRegistrationById, updateRegistration } from '@/lib/db';
 import { validateDocument } from '@/lib/document';
 
-async function checkAuth(request: NextRequest) {
+async function checkAuth(request: NextRequest): Promise<StaffAccess> {
   const authHeader = request.headers.get('authorization');
-  await requireAdmin(authHeader);
+  return requireRegistrationsAccess(authHeader);
 }
 
 function badId(id: unknown): boolean {
@@ -16,8 +16,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let staff: StaffAccess;
   try {
-    await checkAuth(request);
+    staff = await checkAuth(request);
   } catch {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
@@ -27,7 +28,7 @@ export async function GET(
       return NextResponse.json({ error: 'invalidRequest' }, { status: 400 });
     }
     const registration = await getRegistrationById(id);
-    if (!registration) {
+    if (!registration || !canAccessRegistration(staff, registration.institution_id)) {
       return NextResponse.json({ error: 'notFound' }, { status: 404 });
     }
     return NextResponse.json(registration);
@@ -41,8 +42,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let staff: StaffAccess;
   try {
-    await checkAuth(request);
+    staff = await checkAuth(request);
   } catch {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
@@ -52,7 +54,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'invalidRequest' }, { status: 400 });
     }
     const registration = await getRegistrationById(id);
-    if (!registration) {
+    if (!registration || !canAccessRegistration(staff, registration.institution_id)) {
       return NextResponse.json({ error: 'notFound' }, { status: 404 });
     }
     const body = await request.json();
@@ -72,8 +74,16 @@ export async function PATCH(
     const linkOrHandle = typeof body.link_or_handle === 'string' ? body.link_or_handle.trim() || undefined : undefined;
     const flightDepartureTime =
       typeof body.flight_departure_time === 'string' ? body.flight_departure_time.trim() || undefined : undefined;
+    const flightDepartureAirline =
+      typeof body.flight_departure_airline === 'string' ? body.flight_departure_airline.trim() || undefined : undefined;
+    const flightDepartureNumber =
+      typeof body.flight_departure_number === 'string' ? body.flight_departure_number.trim() || undefined : undefined;
     const flightReturnTime =
       typeof body.flight_return_time === 'string' ? body.flight_return_time.trim() || undefined : undefined;
+    const flightReturnAirline =
+      typeof body.flight_return_airline === 'string' ? body.flight_return_airline.trim() || undefined : undefined;
+    const flightReturnNumber =
+      typeof body.flight_return_number === 'string' ? body.flight_return_number.trim() || undefined : undefined;
     const role = typeof body.role === 'string' ? body.role.trim() || undefined : undefined;
     const language = body.language === 'pt-BR' || body.language === 'es' ? body.language : undefined;
     const wantsToKnowNovoTempo =
@@ -117,7 +127,11 @@ export async function PATCH(
     if (linkOrHandle !== undefined) updates.link_or_handle = linkOrHandle;
     if (wantsToKnowNovoTempo !== undefined) updates.wants_to_know_novo_tempo = wantsToKnowNovoTempo;
     if (flightDepartureTime !== undefined) updates.flight_departure_time = flightDepartureTime;
+    if (flightDepartureAirline !== undefined) updates.flight_departure_airline = flightDepartureAirline;
+    if (flightDepartureNumber !== undefined) updates.flight_departure_number = flightDepartureNumber;
     if (flightReturnTime !== undefined) updates.flight_return_time = flightReturnTime;
+    if (flightReturnAirline !== undefined) updates.flight_return_airline = flightReturnAirline;
+    if (flightReturnNumber !== undefined) updates.flight_return_number = flightReturnNumber;
     if (role !== undefined) updates.role = role;
     if (language !== undefined) updates.language = language;
 
@@ -138,8 +152,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let staff: StaffAccess;
   try {
-    await checkAuth(request);
+    staff = await checkAuth(request);
   } catch {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
@@ -147,6 +162,10 @@ export async function DELETE(
     const { id } = await params;
     if (badId(id)) {
       return NextResponse.json({ error: 'invalidRequest' }, { status: 400 });
+    }
+    const registration = await getRegistrationById(id);
+    if (!registration || !canAccessRegistration(staff, registration.institution_id)) {
+      return NextResponse.json({ error: 'notFound' }, { status: 404 });
     }
     const result = await deleteRegistration(id);
     if (!result.success) {

@@ -31,10 +31,10 @@ export function LanguageSelector({ theme = 'light' }: LanguageSelectorProps) {
         className={`min-h-[44px] h-9 sm:h-8 px-2.5 sm:px-3 border-0 shadow-none transition-all duration-300 ${
           language === 'pt-BR'
             ? isDark
-              ? 'bg-ov-purple text-white hover:bg-ov-purple-bright rounded-full'
+              ? 'bg-ov-navy text-white hover:bg-ov-deep rounded-full ring-2 ring-ov-ink'
               : 'bg-white/80 text-gray-900 hover:bg-white'
             : isDark
-              ? 'text-ov-ink hover:bg-violet-100 hover:text-ov-ink opacity-70 hover:opacity-100 rounded-full'
+              ? 'text-ov-ink hover:bg-violet-100 hover:text-ov-ink opacity-55 hover:opacity-100 rounded-full'
               : 'text-gray-600 hover:bg-white/70 hover:text-gray-900 opacity-70 hover:opacity-100'
         }`}
         title="Português"
@@ -50,10 +50,10 @@ export function LanguageSelector({ theme = 'light' }: LanguageSelectorProps) {
         className={`min-h-[44px] h-9 sm:h-8 px-2.5 sm:px-3 border-0 shadow-none transition-all duration-300 ${
           language === 'es'
             ? isDark
-              ? 'bg-ov-purple text-white hover:bg-ov-purple-bright rounded-full'
+              ? 'bg-ov-navy text-white hover:bg-ov-deep rounded-full ring-2 ring-ov-ink'
               : 'bg-white/80 text-gray-900 hover:bg-white'
             : isDark
-              ? 'text-ov-ink hover:bg-violet-100 hover:text-ov-ink opacity-70 hover:opacity-100 rounded-full'
+              ? 'text-ov-ink hover:bg-violet-100 hover:text-ov-ink opacity-55 hover:opacity-100 rounded-full'
               : 'text-gray-600 hover:bg-white/70 hover:text-gray-900 opacity-70 hover:opacity-100'
         }`}
         title="Español"

@@ -63,7 +63,11 @@ interface RegistrationData {
   link_or_handle?: string;
   wants_to_know_novo_tempo?: boolean;
   flight_departure_time?: string;
+  flight_departure_airline?: string;
+  flight_departure_number?: string;
   flight_return_time?: string;
+  flight_return_airline?: string;
+  flight_return_number?: string;
   role?: string;
   language: string;
   status: string;
@@ -103,7 +107,11 @@ export default function EditRegistrationPage() {
     link_or_handle: '',
     wants_to_know_novo_tempo: '' as '' | 'yes' | 'no',
     flight_departure_time: '',
+    flight_departure_airline: '',
+    flight_departure_number: '',
     flight_return_time: '',
+    flight_return_airline: '',
+    flight_return_number: '',
     role: '',
     language: 'pt-BR',
   });
@@ -140,7 +148,11 @@ export default function EditRegistrationPage() {
           wants_to_know_novo_tempo:
             data.wants_to_know_novo_tempo === true ? 'yes' : data.wants_to_know_novo_tempo === false ? 'no' : '',
           flight_departure_time: data.flight_departure_time ?? '',
+          flight_departure_airline: data.flight_departure_airline ?? '',
+          flight_departure_number: data.flight_departure_number ?? '',
           flight_return_time: data.flight_return_time ?? '',
+          flight_return_airline: data.flight_return_airline ?? '',
+          flight_return_number: data.flight_return_number ?? '',
           role: data.role ?? '',
           language: data.language ?? 'pt-BR',
         });
@@ -194,7 +206,11 @@ export default function EditRegistrationPage() {
                 ? false
                 : undefined,
           flight_departure_time: formData.flight_departure_time || undefined,
+          flight_departure_airline: formData.flight_departure_airline.trim() || undefined,
+          flight_departure_number: formData.flight_departure_number.trim() || undefined,
           flight_return_time: formData.flight_return_time || undefined,
+          flight_return_airline: formData.flight_return_airline.trim() || undefined,
+          flight_return_number: formData.flight_return_number.trim() || undefined,
           role: formData.role || undefined,
           language: formData.language,
         }),
@@ -219,7 +235,11 @@ export default function EditRegistrationPage() {
         wants_to_know_novo_tempo:
           updated.wants_to_know_novo_tempo === true ? 'yes' : updated.wants_to_know_novo_tempo === false ? 'no' : '',
         flight_departure_time: updated.flight_departure_time ?? '',
+        flight_departure_airline: updated.flight_departure_airline ?? '',
+        flight_departure_number: updated.flight_departure_number ?? '',
         flight_return_time: updated.flight_return_time ?? '',
+        flight_return_airline: updated.flight_return_airline ?? '',
+        flight_return_number: updated.flight_return_number ?? '',
         role: updated.role ?? '',
         language: updated.language ?? 'pt-BR',
       });
@@ -551,7 +571,25 @@ export default function EditRegistrationPage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="flight_departure_airline">{t.admin.registrations.flightDepartureAirline}</Label>
+                <Input
+                  id="flight_departure_airline"
+                  value={formData.flight_departure_airline}
+                  onChange={(e) => setFormData({ ...formData, flight_departure_airline: e.target.value })}
+                  placeholder="LATAM, Gol, Azul..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="flight_departure_number">{t.admin.registrations.flightDepartureNumber}</Label>
+                <Input
+                  id="flight_departure_number"
+                  value={formData.flight_departure_number}
+                  onChange={(e) => setFormData({ ...formData, flight_departure_number: e.target.value })}
+                  placeholder="LA 3094"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="flight_departure_time">{t.admin.registrations.flightDepartureTime}</Label>
                 <Input
@@ -559,6 +597,26 @@ export default function EditRegistrationPage() {
                   type="time"
                   value={formData.flight_departure_time}
                   onChange={(e) => setFormData({ ...formData, flight_departure_time: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="flight_return_airline">{t.admin.registrations.flightReturnAirline}</Label>
+                <Input
+                  id="flight_return_airline"
+                  value={formData.flight_return_airline}
+                  onChange={(e) => setFormData({ ...formData, flight_return_airline: e.target.value })}
+                  placeholder="LATAM, Gol, Azul..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="flight_return_number">{t.admin.registrations.flightReturnNumber}</Label>
+                <Input
+                  id="flight_return_number"
+                  value={formData.flight_return_number}
+                  onChange={(e) => setFormData({ ...formData, flight_return_number: e.target.value })}
+                  placeholder="LA 3095"
                 />
               </div>
               <div className="space-y-2">

@@ -1,5 +1,12 @@
 import { getAdminAuth } from './firebase-admin';
 import { isAdminUser, canDoCheckin, getAdmin } from './db';
+import type { AdminRole } from './admin-roles';
+
+export type StaffAccess = {
+  uid: string;
+  role: AdminRole;
+  institutionId: string | null;
+};
 
 /**
  * Get current user from Firebase ID token (Bearer token in Authorization header).
@@ -67,4 +74,33 @@ export async function requireCheckinOrAdmin(
     throw new Error('Unauthorized');
   }
   return { uid: user.uid };
+}
+
+/** Admin (todas as instituições) ou secretaria (apenas a instituição vinculada). */
+export async function requireRegistrationsAccess(
+  authorizationHeader: string | null
+): Promise<StaffAccess> {
+  const user = await getCurrentUser(authorizationHeader);
+  if (!user) {
+    throw new Error('Unauthorized');
+  }
+  const admin = await getAdmin(user.uid);
+  if (!admin?.enabled) {
+    throw new Error('Unauthorized');
+  }
+  if (admin.role === 'admin') {
+    return { uid: user.uid, role: 'admin', institutionId: null };
+  }
+  if (admin.role === 'secretaria' && admin.institution_id) {
+    return { uid: user.uid, role: 'secretaria', institutionId: admin.institution_id };
+  }
+  throw new Error('Unauthorized');
+}
+
+export function canAccessRegistration(
+  staff: StaffAccess,
+  institutionId: string | undefined | null
+): boolean {
+  if (staff.role === 'admin') return true;
+  return Boolean(staff.institutionId && institutionId && staff.institutionId === institutionId);
 }

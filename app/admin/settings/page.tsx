@@ -7,6 +7,7 @@ import { useLanguage } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthProvider';
 import { fetchWithAuth } from '@/lib/admin-api';
 import { isStrongPassword } from '@/lib/password';
+import { staffHomePath } from '@/lib/admin-roles';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -66,7 +67,7 @@ export default function AdminSettingsPage() {
       }
       const profile = await refreshAdminStatus();
       if (profile && !profile.mustChangePassword) {
-        router.replace(profile.role === 'checkin' ? '/admin/checkin' : '/admin');
+        router.replace(staffHomePath(profile.role));
         return;
       }
       if (profile?.mustChangePassword) {

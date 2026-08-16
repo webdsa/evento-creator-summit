@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
-import { cancelRegistration } from '@/lib/db';
+import { canAccessRegistration, requireRegistrationsAccess } from '@/lib/auth';
+import { cancelRegistration, getRegistrationById } from '@/lib/db';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  let uid: string;
+  let staff;
   try {
     const authHeader = request.headers.get('authorization');
-    const admin = await requireAdmin(authHeader);
-    uid = admin.uid;
+    staff = await requireRegistrationsAccess(authHeader);
   } catch {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
@@ -19,7 +18,11 @@ export async function POST(
     if (!id || typeof id !== 'string' || id.length > 1500) {
       return NextResponse.json({ error: 'invalidRequest' }, { status: 400 });
     }
-    const result = await cancelRegistration(id, uid);
+    const registration = await getRegistrationById(id);
+    if (!registration || !canAccessRegistration(staff, registration.institution_id)) {
+      return NextResponse.json({ error: 'notFound' }, { status: 404 });
+    }
+    const result = await cancelRegistration(id, staff.uid);
     if (!result.success) {
       return NextResponse.json(
         { error: result.error },

@@ -6,6 +6,8 @@
 import * as admin from 'firebase-admin';
 import { getAdminFirestore } from './firebase-admin';
 import { coerceFirestoreInstantToIso } from './firestore-instant';
+import type { AdminRole } from './admin-roles';
+import { parseAdminRole } from './admin-roles';
 
 const COLL = {
   institutions: 'institutions',
@@ -72,7 +74,11 @@ export interface Registration {
   link_or_handle?: string;
   wants_to_know_novo_tempo?: boolean;
   flight_departure_time?: string;
+  flight_departure_airline?: string;
+  flight_departure_number?: string;
   flight_return_time?: string;
+  flight_return_airline?: string;
+  flight_return_number?: string;
   role?: string;
   institution_id: string;
   institution_name?: string;
@@ -848,7 +854,11 @@ export async function createRegistration(params: {
   p_link_or_handle?: string;
   p_wants_to_know_novo_tempo: boolean;
   p_flight_departure_time?: string;
+  p_flight_departure_airline?: string;
+  p_flight_departure_number?: string;
   p_flight_return_time?: string;
+  p_flight_return_airline?: string;
+  p_flight_return_number?: string;
   p_role?: string;
   p_language: string;
 }): Promise<CreateRegistrationResult> {
@@ -869,7 +879,11 @@ export async function createRegistration(params: {
     p_link_or_handle,
     p_wants_to_know_novo_tempo,
     p_flight_departure_time,
+    p_flight_departure_airline,
+    p_flight_departure_number,
     p_flight_return_time,
+    p_flight_return_airline,
+    p_flight_return_number,
     p_role,
     p_language,
   } = params;
@@ -924,7 +938,11 @@ export async function createRegistration(params: {
     link_or_handle: p_link_or_handle || undefined,
     wants_to_know_novo_tempo: p_wants_to_know_novo_tempo,
     flight_departure_time: p_flight_departure_time || undefined,
+    flight_departure_airline: p_flight_departure_airline || undefined,
+    flight_departure_number: p_flight_departure_number || undefined,
     flight_return_time: p_flight_return_time || undefined,
+    flight_return_airline: p_flight_return_airline || undefined,
+    flight_return_number: p_flight_return_number || undefined,
     role: p_role || undefined,
     institution_id: voucher.institution_id,
     institution_name: institution?.name,
@@ -1086,6 +1104,28 @@ export async function listRegistrations(): Promise<(Registration & { institution
   }));
 }
 
+export async function listRegistrationsByInstitution(
+  institutionId: string
+): Promise<(Registration & { institution?: { name: string } })[]> {
+  const snap = await db()
+    .collection(COLL.registrations)
+    .where('institution_id', '==', institutionId)
+    .get();
+  const list = snap.docs
+    .filter((d) => d.id !== '_init')
+    .map((d) => {
+      const raw = d.data() as Record<string, unknown>;
+      const reg = { id: d.id, ...raw } as Registration;
+      return { ...reg, checked_in_at: coerceFirestoreInstantToIso(raw.checked_in_at) };
+    })
+    .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
+  const inst = await getInstitution(institutionId);
+  return list.map((r) => ({
+    ...r,
+    institution: inst ? { name: inst.name } : undefined,
+  }));
+}
+
 export async function getRegistrationById(
   id: string
 ): Promise<
@@ -1182,7 +1222,11 @@ export type UpdateRegistrationData = Partial<
     | 'link_or_handle'
     | 'wants_to_know_novo_tempo'
     | 'flight_departure_time'
+    | 'flight_departure_airline'
+    | 'flight_departure_number'
     | 'flight_return_time'
+    | 'flight_return_airline'
+    | 'flight_return_number'
     | 'role'
     | 'language'
     | 'confirmation_email_sent_at'
@@ -1201,7 +1245,12 @@ export async function updateRegistration(
 }
 
 // --- Admins ---
-export type AdminRole = 'admin' | 'checkin';
+export interface AdminProfile {
+  enabled: boolean;
+  hasChangedPassword: boolean;
+  role: AdminRole;
+  institution_id?: string;
+}
 
 export async function isAdminUser(userId: string): Promise<boolean> {
   const admin = await getAdmin(userId);
@@ -1216,36 +1265,58 @@ export async function canDoCheckin(userId: string): Promise<boolean> {
   return role === 'admin' || role === 'checkin';
 }
 
-export async function getAdmin(
-  userId: string
-): Promise<{ enabled: boolean; hasChangedPassword: boolean; role: AdminRole } | null> {
+export async function getAdmin(userId: string): Promise<AdminProfile | null> {
   const doc = await db().collection(COLL.admins).doc(userId).get();
   if (!doc.exists) return null;
   const d = doc.data()!;
-  const role = (d.role === 'checkin' ? 'checkin' : 'admin') as AdminRole;
+  const institutionId =
+    typeof d.institution_id === 'string' && d.institution_id.trim()
+      ? d.institution_id.trim()
+      : undefined;
   return {
     enabled: d.enabled,
     hasChangedPassword: !!d.passwordChangedAt,
-    role,
+    role: parseAdminRole(d.role),
+    institution_id: institutionId,
   };
 }
 
 export async function createAdminUser(params: {
   uid: string;
   role: AdminRole;
+  institution_id?: string;
 }): Promise<void> {
   const t = now();
-  await db()
-    .collection(COLL.admins)
-    .doc(params.uid)
-    .set(
-      {
-        enabled: true,
-        role: params.role,
-        created_at: t,
-      },
-      { merge: true }
-    );
+  const data: Record<string, unknown> = {
+    enabled: true,
+    role: params.role,
+    created_at: t,
+  };
+  if (params.role === 'secretaria' && params.institution_id) {
+    data.institution_id = params.institution_id;
+  }
+  await db().collection(COLL.admins).doc(params.uid).set(data, { merge: true });
+}
+
+export async function updateAdminUser(
+  uid: string,
+  updates: {
+    role?: AdminRole;
+    institution_id?: string | null;
+    enabled?: boolean;
+  }
+): Promise<void> {
+  const { FieldValue } = await import('firebase-admin/firestore');
+  const data: Record<string, unknown> = {};
+  if (updates.role !== undefined) data.role = updates.role;
+  if (updates.enabled !== undefined) data.enabled = updates.enabled;
+  if (updates.institution_id === null) {
+    data.institution_id = FieldValue.delete();
+  } else if (updates.institution_id !== undefined) {
+    data.institution_id = updates.institution_id;
+  }
+  if (Object.keys(data).length === 0) return;
+  await db().collection(COLL.admins).doc(uid).update(data);
 }
 
 export async function setAdminPasswordChanged(userId: string): Promise<void> {
@@ -1261,6 +1332,7 @@ export interface AdminListEntry {
   enabled: boolean;
   created_at: string | null;
   hasChangedPassword: boolean;
+  institution_id?: string;
 }
 
 /** Lista todos os documentos da coleção admins (para listagem na tela de usuários). */
@@ -1270,13 +1342,17 @@ export async function listAdminDocuments(): Promise<AdminListEntry[]> {
     .filter((d) => d.id !== '_init')
     .map((d) => {
       const data = d.data();
-      const role = (data.role === 'checkin' ? 'checkin' : 'admin') as AdminRole;
+      const institutionId =
+        typeof data.institution_id === 'string' && data.institution_id.trim()
+          ? data.institution_id.trim()
+          : undefined;
       return {
         uid: d.id,
-        role,
+        role: parseAdminRole(data.role),
         enabled: !!data.enabled,
         created_at: data.created_at ?? null,
         hasChangedPassword: !!data.passwordChangedAt,
+        institution_id: institutionId,
       };
     });
 }

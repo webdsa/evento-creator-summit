@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
-import { listRegistrations } from '@/lib/db';
+import { requireRegistrationsAccess } from '@/lib/auth';
+import { listRegistrations, listRegistrationsByInstitution } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
+  let staff;
   try {
     const authHeader = request.headers.get('authorization');
-    await requireAdmin(authHeader);
+    staff = await requireRegistrationsAccess(authHeader);
   } catch {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   try {
-    const list = await listRegistrations();
+    const list = staff.institutionId
+      ? await listRegistrationsByInstitution(staff.institutionId)
+      : await listRegistrations();
     return NextResponse.json(list);
   } catch (error) {
     console.error('List registrations error:', error);

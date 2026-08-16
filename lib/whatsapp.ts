@@ -1,7 +1,9 @@
 /**
  * Envio de mensagens WhatsApp via Unnichat.
  * https://unnichat.com.br/api/api-docs/
- * Configure UNNICHAT_API_BASE_URL e UNNICHAT_API_KEY no .env.
+ * Configure UNNICHAT_API_BASE_URL, UNNICHAT_API_KEY,
+ * UNNICHAT_TEMPLATE_ID_PT, UNNICHAT_TEMPLATE_ID_ES,
+ * UNNICHAT_TAG_PT e UNNICHAT_TAG_ES no .env.
  */
 
 export type Language = 'pt-BR' | 'es';
@@ -23,10 +25,13 @@ export interface SendRegistrationWhatsAppParams {
 }
 
 /** Template IDs aprovados no WhatsApp (Unichat): {{1}} = email, {{2}} = código da inscrição */
-const TEMPLATE_IDS: Record<Language, string> = {
-  'pt-BR': '959492029749455',
-  es: '921690590224843',
-};
+function getTemplateId(language: Language): string | undefined {
+  const id =
+    language === 'es'
+      ? process.env.UNNICHAT_TEMPLATE_ID_ES?.trim()
+      : process.env.UNNICHAT_TEMPLATE_ID_PT?.trim();
+  return id || undefined;
+}
 
 /**
  * Normaliza o telefone para E.164 (apenas dígitos, com código do país).
@@ -63,11 +68,14 @@ function getUnnichatHeaders(): Record<string, string> {
   return headers;
 }
 
-/** Tags por idioma no Unnichat: MidiaTecPT (pt-BR) e MidiaTecES (español). */
-export const UNNICHAT_TAG_BY_LANGUAGE: Record<Language, string> = {
-  'pt-BR': 'MidiaTecPT',
-  es: 'MidiaTecES',
-};
+/** Tag do Unnichat por idioma: UNNICHAT_TAG_PT (pt-BR) ou UNNICHAT_TAG_ES (es). */
+function getTagByLanguage(language: Language): string | undefined {
+  const tag =
+    language === 'es'
+      ? process.env.UNNICHAT_TAG_ES?.trim()
+      : process.env.UNNICHAT_TAG_PT?.trim();
+  return tag || undefined;
+}
 
 /**
  * Obtém o ID de uma tag no Unnichat por nome (busca ou cria). A API usa tag_id, não nome.
@@ -143,7 +151,7 @@ async function addTagToUnnichatContactByPhone(
 
 /**
  * Cria um contato no Unnichat (POST /contact). Útil antes de enviar mensagem.
- * Associa a tag por idioma: pt-BR → MidiaTecPT, es → MidiaTecES.
+ * Associa a tag por idioma: UNNICHAT_TAG_PT (pt-BR) ou UNNICHAT_TAG_ES (es).
  * Retorna { created: true } em sucesso; { created: false, error } em falha.
  * Se o contato já existir (ex.: 409), trata como sucesso e adiciona a tag se faltar.
  */
@@ -151,7 +159,7 @@ export async function createUnnichatContact(params: {
   phone: string;
   fullName: string;
   email?: string;
-  /** Idioma do cadastro: define a tag MidiaTecPT ou MidiaTecES. Default: pt-BR. */
+  /** Idioma do cadastro: define a tag UNNICHAT_TAG_PT ou UNNICHAT_TAG_ES. Default: pt-BR. */
   language?: Language;
 }): Promise<{ created: boolean; error?: string }> {
   if (!isUnnichatConfigured()) {
@@ -163,8 +171,8 @@ export async function createUnnichatContact(params: {
   }
 
   const language = params.language === 'es' ? 'es' : 'pt-BR';
-  const tagName = UNNICHAT_TAG_BY_LANGUAGE[language];
-  const tagId = await getOrCreateUnnichatTagId(tagName);
+  const tagName = getTagByLanguage(language);
+  const tagId = tagName ? await getOrCreateUnnichatTagId(tagName) : null;
 
   const baseUrl = (process.env.UNNICHAT_API_BASE_URL ?? 'https://unnichat.com.br/api').trim().replace(/\/$/, '');
   const url = `${baseUrl}/contact`;
@@ -278,7 +286,7 @@ async function sendTemplateViaUnnichat(
 
 /**
  * Envia mensagem de confirmação de inscrição por WhatsApp via Unnichat (template).
- * Usa template por idioma: pt-BR → 959492029749455, es → 921690590224843.
+ * Usa template por idioma: UNNICHAT_TEMPLATE_ID_PT (pt-BR) ou UNNICHAT_TEMPLATE_ID_ES (es).
  * Variáveis no template: {{1}} = email do participante, {{2}} = código da inscrição.
  * Retorna { sent: true } em sucesso ou { sent: false, error: string } em falha.
  */
@@ -294,7 +302,11 @@ export async function sendRegistrationWhatsApp(
     return { sent: false, error: 'Número de telefone inválido' };
   }
 
-  const templateId = TEMPLATE_IDS[params.language];
+  const templateId = getTemplateId(params.language);
+  if (!templateId) {
+    const envName = params.language === 'es' ? 'UNNICHAT_TEMPLATE_ID_ES' : 'UNNICHAT_TEMPLATE_ID_PT';
+    return { sent: false, error: `WhatsApp: ${envName} não configurado no .env` };
+  }
   return sendTemplateViaUnnichat(number, templateId, {
     email: params.email,
     registrationCode: params.registrationCode,

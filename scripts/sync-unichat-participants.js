@@ -1,14 +1,14 @@
 /**
  * Sincroniza todos os participantes (inscrições) com a plataforma Unichat:
- * - Cria as tags MidiaTecPT e MidiaTecES no Unichat (se não existirem)
+ * - Cria as tags UNNICHAT_TAG_PT e UNNICHAT_TAG_ES no Unichat (se não existirem)
  * - Cria ou atualiza cada contato no Unichat com a tag conforme o idioma:
- *   pt-BR → MidiaTecPT, es → MidiaTecES
+ *   pt-BR → UNNICHAT_TAG_PT, es → UNNICHAT_TAG_ES
  *
  * Uso:
  *   node scripts/sync-unichat-participants.js
  *   node scripts/sync-unichat-participants.js --dry-run   (só lista, não envia)
  *
- * Requer .env: UNNICHAT_API_BASE_URL, UNNICHAT_API_KEY,
+ * Requer .env: UNNICHAT_API_BASE_URL, UNNICHAT_API_KEY, UNNICHAT_TAG_PT, UNNICHAT_TAG_ES,
  *   NEXT_PUBLIC_FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY
  */
 
@@ -37,10 +37,13 @@ function loadEnvFile(fileName) {
 loadEnvFile('.env.local');
 loadEnvFile('.env');
 
-const UNNICHAT_TAG_BY_LANGUAGE = {
-  'pt-BR': 'MidiaTecPT',
-  es: 'MidiaTecES',
-};
+function getTagByLanguage(language) {
+  const tag =
+    language === 'es'
+      ? process.env.UNNICHAT_TAG_ES?.trim()
+      : process.env.UNNICHAT_TAG_PT?.trim();
+  return tag || undefined;
+}
 
 function normalizePhone(phone) {
   const digits = String(phone || '').replace(/\D/g, '').trim();
@@ -120,8 +123,8 @@ async function createUnnichatContact(baseUrl, { phone, fullName, email, language
   const normalized = normalizePhone(phone);
   if (!normalized) return { ok: false, error: 'Número inválido' };
   const lang = language === 'es' ? 'es' : 'pt-BR';
-  const tagName = UNNICHAT_TAG_BY_LANGUAGE[lang];
-  const tagId = await getOrCreateUnnichatTagId(baseUrl, tagName);
+  const tagName = getTagByLanguage(lang);
+  const tagId = tagName ? await getOrCreateUnnichatTagId(baseUrl, tagName) : null;
   const body = {
     phone: normalized,
     name: (fullName || '').trim() || 'Contato',
@@ -160,6 +163,12 @@ async function main() {
     console.error('Erro: defina UNNICHAT_API_KEY no .env');
     process.exit(1);
   }
+  const tagPt = getTagByLanguage('pt-BR');
+  const tagEs = getTagByLanguage('es');
+  if (!tagPt || !tagEs) {
+    console.error('Erro: defina UNNICHAT_TAG_PT e UNNICHAT_TAG_ES no .env');
+    process.exit(1);
+  }
   if (!projectId || !clientEmail || !privateKey) {
     console.error('Erro: defina NEXT_PUBLIC_FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL e FIREBASE_PRIVATE_KEY no .env');
     process.exit(1);
@@ -180,7 +189,7 @@ async function main() {
     .map((d) => ({ id: d.id, ...d.data() }))
     .filter((r) => r.phone && (r.language === 'pt-BR' || r.language === 'es'));
 
-  console.log('Tags no Unichat: MidiaTecPT (pt-BR), MidiaTecES (es)\n');
+  console.log(`Tags no Unichat: ${tagPt} (pt-BR), ${tagEs} (es)\n`);
   console.log('Total de inscrições com telefone e idioma válido:', registrations.length);
   if (registrations.length === 0) {
     console.log('Nada a sincronizar.');
@@ -190,7 +199,7 @@ async function main() {
   if (dryRun) {
     console.log('\n[--dry-run] Seriam sincronizados:\n');
     registrations.forEach((r, i) => {
-      const tag = UNNICHAT_TAG_BY_LANGUAGE[r.language === 'es' ? 'es' : 'pt-BR'];
+      const tag = getTagByLanguage(r.language === 'es' ? 'es' : 'pt-BR');
       console.log(`  ${i + 1}. ${r.full_name} | ${r.phone} | ${r.language} → ${tag}`);
     });
     console.log('\nExecute sem --dry-run para enviar ao Unichat.');
@@ -201,7 +210,7 @@ async function main() {
   let fail = 0;
   for (let i = 0; i < registrations.length; i++) {
     const r = registrations[i];
-    const tag = UNNICHAT_TAG_BY_LANGUAGE[r.language === 'es' ? 'es' : 'pt-BR'];
+    const tag = getTagByLanguage(r.language === 'es' ? 'es' : 'pt-BR');
     const result = await createUnnichatContact(baseUrl, {
       phone: r.phone,
       fullName: r.full_name,

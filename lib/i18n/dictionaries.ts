@@ -233,6 +233,10 @@ export interface Dictionary {
       role: string;
       roleAdmin: string;
       roleCheckin: string;
+      roleSecretaria: string;
+      institution: string;
+      institutionPlaceholder: string;
+      institutionRequired: string;
       status: string;
       createdAt: string;
       noUsers: string;
@@ -240,6 +244,15 @@ export interface Dictionary {
       backToList: string;
       submit: string;
       success: string;
+      successEmailSent: string;
+      successEmailFailed: string;
+      editUser: string;
+      updateSuccess: string;
+      newPassword: string;
+      newPasswordPlaceholder: string;
+      cannotChangeOwnRole: string;
+      cannotDisableSelf: string;
+      cannotRemoveLastAdmin: string;
       emailAlreadyExists: string;
       passwordTooShort: string;
       passwordTooWeak: string;
@@ -463,7 +476,11 @@ export interface Dictionary {
       conteudo: string;
       linkOrHandle: string;
       flightDepartureTime: string;
+      flightDepartureAirline: string;
+      flightDepartureNumber: string;
       flightReturnTime: string;
+      flightReturnAirline: string;
+      flightReturnNumber: string;
       visitation: string;
       checkinFilter: string;
       checkinDateTimeColumn: string;
@@ -761,7 +778,7 @@ export const dictionaries: Record<Language, Dictionary> = {
         createUser: 'Criar usuário',
         createUserDescription: 'O usuário poderá acessar o painel conforme o perfil escolhido. E-mail e senha são usados no login em /admin/login.',
         listTitle: 'Usuários da plataforma',
-        listDescription: 'Usuários com acesso ao painel (administradores e equipe de check-in).',
+        listDescription: 'Usuários com acesso ao painel (administradores, secretaria e equipe de check-in).',
         email: 'E-mail',
         emailPlaceholder: 'exemplo@email.com',
         password: 'Senha',
@@ -769,6 +786,10 @@ export const dictionaries: Record<Language, Dictionary> = {
         role: 'Perfil',
         roleAdmin: 'Administrador',
         roleCheckin: 'Check-in (apenas registro no evento)',
+        roleSecretaria: 'Secretaria (apenas inscritos da instituição)',
+        institution: 'Instituição',
+        institutionPlaceholder: 'Selecione a instituição',
+        institutionRequired: 'Selecione a instituição para o perfil de secretaria.',
         status: 'Status',
         createdAt: 'Criado em',
         noUsers: 'Nenhum usuário cadastrado.',
@@ -776,6 +797,15 @@ export const dictionaries: Record<Language, Dictionary> = {
         backToList: 'Voltar à lista',
         submit: 'Criar usuário',
         success: 'Usuário criado com sucesso.',
+        successEmailSent: 'Usuário criado. Um e-mail com a URL de acesso, e-mail e senha foi enviado.',
+        successEmailFailed: 'Usuário criado, mas o e-mail de acesso não pôde ser enviado.',
+        editUser: 'Editar usuário',
+        updateSuccess: 'Usuário atualizado com sucesso.',
+        newPassword: 'Nova senha',
+        newPasswordPlaceholder: 'Deixe em branco para manter a senha atual',
+        cannotChangeOwnRole: 'Você não pode alterar o próprio perfil.',
+        cannotDisableSelf: 'Você não pode desativar a si mesmo.',
+        cannotRemoveLastAdmin: 'Não é possível remover o último administrador ativo.',
         emailAlreadyExists: 'Este e-mail já está em uso.',
         passwordTooShort: 'A senha deve ter no mínimo 8 caracteres.',
         passwordTooWeak: 'Senha muito fraca.',
@@ -1000,7 +1030,11 @@ export const dictionaries: Record<Language, Dictionary> = {
       conteudo: 'Conteúdo',
       linkOrHandle: 'Link ou @',
       flightDepartureTime: 'Horário voo ida',
+      flightDepartureAirline: 'Companhia voo ida',
+      flightDepartureNumber: 'Número voo ida',
       flightReturnTime: 'Horário voo volta',
+      flightReturnAirline: 'Companhia voo volta',
+      flightReturnNumber: 'Número voo volta',
       visitation: 'Visitação Novo Tempo',
       checkinFilter: 'Check-in',
       checkinDateTimeColumn: 'Data/hora do check-in',
@@ -1297,7 +1331,7 @@ export const dictionaries: Record<Language, Dictionary> = {
         createUser: 'Crear usuario',
         createUserDescription: 'El usuario podrá acceder al panel según el perfil elegido. Correo y contraseña se usan en el login en /admin/login.',
         listTitle: 'Usuarios de la plataforma',
-        listDescription: 'Usuarios con acceso al panel (administradores y equipo de registro).',
+        listDescription: 'Usuarios con acceso al panel (administradores, secretaría y equipo de registro).',
         email: 'Correo electrónico',
         emailPlaceholder: 'ejemplo@email.com',
         password: 'Contraseña',
@@ -1305,6 +1339,10 @@ export const dictionaries: Record<Language, Dictionary> = {
         role: 'Perfil',
         roleAdmin: 'Administrador',
         roleCheckin: 'Registro (solo check-in en el evento)',
+        roleSecretaria: 'Secretaría (solo inscritos de la institución)',
+        institution: 'Institución',
+        institutionPlaceholder: 'Seleccione la institución',
+        institutionRequired: 'Seleccione la institución para el perfil de secretaría.',
         status: 'Estado',
         createdAt: 'Creado',
         noUsers: 'Ningún usuario registrado.',
@@ -1312,6 +1350,15 @@ export const dictionaries: Record<Language, Dictionary> = {
         backToList: 'Volver a la lista',
         submit: 'Crear usuario',
         success: 'Usuario creado correctamente.',
+        successEmailSent: 'Usuario creado. Se envió un correo con la URL de acceso, el correo y la contraseña.',
+        successEmailFailed: 'Usuario creado, pero no se pudo enviar el correo de acceso.',
+        editUser: 'Editar usuario',
+        updateSuccess: 'Usuario actualizado correctamente.',
+        newPassword: 'Nueva contraseña',
+        newPasswordPlaceholder: 'Deje en blanco para mantener la contraseña actual',
+        cannotChangeOwnRole: 'No puede cambiar su propio perfil.',
+        cannotDisableSelf: 'No puede desactivarse a sí mismo.',
+        cannotRemoveLastAdmin: 'No es posible quitar al último administrador activo.',
         emailAlreadyExists: 'Este correo ya está en uso.',
         passwordTooShort: 'La contraseña debe tener al menos 8 caracteres.',
         passwordTooWeak: 'Contraseña muy débil.',
@@ -1536,7 +1583,11 @@ export const dictionaries: Record<Language, Dictionary> = {
         conteudo: 'Contenido',
         linkOrHandle: 'Link o @',
         flightDepartureTime: 'Horario vuelo ida',
+        flightDepartureAirline: 'Compañía vuelo ida',
+        flightDepartureNumber: 'Número vuelo ida',
         flightReturnTime: 'Horario vuelo vuelta',
+        flightReturnAirline: 'Compañía vuelo vuelta',
+        flightReturnNumber: 'Número vuelo vuelta',
         visitation: 'Visita Nuevo Tiempo',
         checkinFilter: 'Check-in',
         checkinDateTimeColumn: 'Fecha y hora del check-in',
