@@ -30,16 +30,6 @@ import {
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino'] as const;
 const SHIRT_SIZE_OPTIONS = ['PP', 'P', 'M', 'G', 'GG', 'XG'] as const;
-const ROLE_OPTIONS = [
-  'Administração',
-  'Coordenador',
-  'Departamental',
-  'Designer',
-  'Editor(a)',
-  'Gerente',
-  'Produtor(a)',
-  'Secretária',
-] as const;
 const LANGUAGES = [
   { value: 'pt-BR', label: 'Português' },
   { value: 'es', label: 'Español' },
@@ -389,27 +379,6 @@ export default function EditRegistrationPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>{t.admin.registrations.role}</Label>
-                <Select
-                  value={formData.role || '__none__'}
-                  onValueChange={(v) => setFormData({ ...formData, role: v === '__none__' ? '' : v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t.publicInscription.rolePlaceholder} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">—</SelectItem>
-                    {ROLE_OPTIONS.map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {r}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t.admin.registrations.visitation}</Label>
                 <Select
