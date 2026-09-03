@@ -107,6 +107,8 @@ export interface Dictionary {
     linkOrHandle: string;
     linkOrHandlePlaceholder: string;
     wantsToKnowNovoTempo: string;
+    flightDepartureDate: string;
+    flightReturnDate: string;
     flightDepartureTime: string;
     flightReturnTime: string;
     role: string;
@@ -475,6 +477,8 @@ export interface Dictionary {
       documentCountry: string;
       conteudo: string;
       linkOrHandle: string;
+      flightDepartureDate: string;
+      flightReturnDate: string;
       flightDepartureTime: string;
       flightDepartureAirline: string;
       flightDepartureNumber: string;
@@ -651,6 +655,8 @@ export const dictionaries: Record<Language, Dictionary> = {
       linkOrHandle: 'Link ou @',
       linkOrHandlePlaceholder: 'Ex: @seuperfil ou https://...',
       wantsToKnowNovoTempo: 'Desejo conhecer a estrutura da Novo Tempo.',
+      flightDepartureDate: 'Data voo ida',
+      flightReturnDate: 'Data voo volta',
       flightDepartureTime: 'Horário voo ida',
       flightReturnTime: 'Horário voo volta',
       role: 'Função',
@@ -1029,6 +1035,8 @@ export const dictionaries: Record<Language, Dictionary> = {
       documentCountry: 'País do documento',
       conteudo: 'Conteúdo',
       linkOrHandle: 'Link ou @',
+      flightDepartureDate: 'Data voo ida',
+      flightReturnDate: 'Data voo volta',
       flightDepartureTime: 'Horário voo ida',
       flightDepartureAirline: 'Companhia voo ida',
       flightDepartureNumber: 'Número voo ida',
@@ -1204,6 +1212,8 @@ export const dictionaries: Record<Language, Dictionary> = {
       linkOrHandle: 'Link o @',
       linkOrHandlePlaceholder: 'Ej: @tuperfil o https://...',
       wantsToKnowNovoTempo: 'Deseo conocer la estructura de Nuevo Tiempo.',
+      flightDepartureDate: 'Fecha vuelo ida',
+      flightReturnDate: 'Fecha vuelo vuelta',
       flightDepartureTime: 'Horario vuelo ida',
       flightReturnTime: 'Horario vuelo vuelta',
       role: 'Función',
@@ -1582,6 +1592,8 @@ export const dictionaries: Record<Language, Dictionary> = {
         documentCountry: 'País del documento',
         conteudo: 'Contenido',
         linkOrHandle: 'Link o @',
+        flightDepartureDate: 'Fecha vuelo ida',
+        flightReturnDate: 'Fecha vuelo vuelta',
         flightDepartureTime: 'Horario vuelo ida',
         flightDepartureAirline: 'Compañía vuelo ida',
         flightDepartureNumber: 'Número vuelo ida',

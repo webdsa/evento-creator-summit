@@ -1,7 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthProvider';
 import { Header } from '@/components/Header';
@@ -180,16 +179,18 @@ interface RegistrationSuccess {
   documento?: string;
   documentType?: string;
   wantsToKnowNovoTempo?: boolean;
+  flightDepartureDate?: string;
+  flightReturnDate?: string;
   institution: string;
 }
 
 function InscricaoContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
   const { t, language, setLanguage } = useLanguage();
   const { toast } = useToast();
   const { user: adminUser } = useAuth();
   const isAdminLoggedIn = !!adminUser;
+  const appliedUrlCode = useRef<string | null>(null);
+  const appliedLanguageFromVoucher = useRef(false);
 
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherValidation, setVoucherValidation] = useState<VoucherValidation | null>(null);
@@ -207,22 +208,23 @@ function InscricaoContent() {
     documentType: '' as DocumentType | '',
     documento: '',
     wantsToKnowNovoTempo: false,
+    flightDepartureDate: '',
+    flightReturnDate: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    const code = searchParams.get('code');
-    if (code) {
-      setVoucherCode(code.toUpperCase());
-      validateVoucher(code.toUpperCase());
-    }
-  }, [searchParams]);
+  const clearFieldError = (...keys: string[]) => {
+    setErrors((prev) => {
+      if (!keys.some((key) => prev[key])) return prev;
+      const next = { ...prev };
+      for (const key of keys) delete next[key];
+      return next;
+    });
+  };
 
   const validateVoucher = async (code: string) => {
     setIsValidating(true);
-    setVoucherValidation(null);
-    setErrors({});
 
     try {
       const response = await fetch(`/api/public/voucher/validate?code=${encodeURIComponent(code)}`);
@@ -245,11 +247,14 @@ function InscricaoContent() {
         const types = getDocumentTypesForCountry(instCountry);
         setFormData((prev) => ({
           ...prev,
-          phoneCountry: instCountry,
-          documentType: types.length === 1 ? types[0] : '',
-          documento: '',
+          phoneCountry: prev.phoneCountry || instCountry,
+          documentType:
+            prev.documentType || (types.length === 1 ? types[0] : ''),
         }));
-        setLanguage(getDefaultLanguageForCountry(instCountry));
+        if (!appliedLanguageFromVoucher.current) {
+          appliedLanguageFromVoucher.current = true;
+          setLanguage(getDefaultLanguageForCountry(instCountry));
+        }
       }
     } catch (error) {
       setVoucherValidation({
@@ -260,6 +265,18 @@ function InscricaoContent() {
       setIsValidating(false);
     }
   };
+
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get('code')?.trim();
+    if (!code) return;
+    const normalized = code.toUpperCase();
+    if (appliedUrlCode.current === normalized) return;
+    appliedUrlCode.current = normalized;
+    setVoucherCode(normalized);
+    void validateVoucher(normalized);
+    // Valida o voucher da URL só na montagem — useSearchParams remonta a página no celular.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleValidateClick = () => {
     if (!voucherCode.trim()) {
@@ -325,8 +342,17 @@ function InscricaoContent() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key !== 'Enter') return;
+    const target = e.target as HTMLElement;
+    if (target instanceof HTMLButtonElement && target.type === 'submit') return;
+    if (target instanceof HTMLTextAreaElement) return;
+    e.preventDefault();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
 
     if (!validateForm()) {
       return;
@@ -355,6 +381,8 @@ function InscricaoContent() {
           documentType: formData.documentType,
           documento: formData.documento,
           wantsToKnowNovoTempo: formData.wantsToKnowNovoTempo,
+          flightDepartureDate: formData.flightDepartureDate || undefined,
+          flightReturnDate: formData.flightReturnDate || undefined,
           language,
         }),
       });
@@ -385,6 +413,8 @@ function InscricaoContent() {
         documento: data.documento,
         documentType: data.documentType,
         wantsToKnowNovoTempo: data.wantsToKnowNovoTempo,
+        flightDepartureDate: data.flightDepartureDate,
+        flightReturnDate: data.flightReturnDate,
         institution: data.institution,
       });
     } catch (error) {
@@ -402,7 +432,7 @@ function InscricaoContent() {
     return (
       <div className="public-area page-inscricao min-h-screen min-w-0 overflow-x-hidden flex flex-col">
         <Header />
-        <main className="flex-1 flex flex-col justify-center container max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
+        <main className="flex-1 flex flex-col justify-start sm:justify-center container max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
           <div className="animate-scale-in">
             <Card className="glass-card border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 shadow-2xl">
               <CardHeader className="text-center pb-6 sm:pb-8 px-4 sm:px-6">
@@ -481,6 +511,22 @@ function InscricaoContent() {
                         <dd className="font-semibold text-gray-900">{success.shirtSize}</dd>
                       </div>
                     )}
+                    {success.flightDepartureDate && (
+                      <div className="border-b border-gray-100 pb-3">
+                        <dt className="text-sm font-medium text-gray-500 mb-1">
+                          {t.publicInscription.flightDepartureDate}
+                        </dt>
+                        <dd className="font-semibold text-gray-900">{success.flightDepartureDate}</dd>
+                      </div>
+                    )}
+                    {success.flightReturnDate && (
+                      <div className="border-b border-gray-100 pb-3">
+                        <dt className="text-sm font-medium text-gray-500 mb-1">
+                          {t.publicInscription.flightReturnDate}
+                        </dt>
+                        <dd className="font-semibold text-gray-900">{success.flightReturnDate}</dd>
+                      </div>
+                    )}
                     {success.wantsToKnowNovoTempo && (
                       <div className="border-b border-gray-100 pb-3">
                         <dt className="text-sm font-medium text-gray-500 mb-1">
@@ -515,7 +561,7 @@ function InscricaoContent() {
   return (
     <div className="public-area page-inscricao min-h-screen min-w-0 overflow-x-hidden flex flex-col">
       <Header />
-      <main className="flex-1 flex flex-col justify-center container max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
+      <main className="flex-1 flex flex-col justify-start sm:justify-center container max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
         <PublicPageHeader
           size="page"
           icon="heart"
@@ -535,9 +581,14 @@ function InscricaoContent() {
                   <Input
                     placeholder={t.publicInscription.voucherPlaceholder}
                     value={voucherCode}
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    autoComplete="off"
+                    enterKeyHint="go"
                     onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
+                        e.preventDefault();
                         handleValidateClick();
                       }
                     }}
@@ -545,6 +596,7 @@ function InscricaoContent() {
                     className="text-base sm:text-lg font-mono h-12 min-h-[44px]"
                   />
                   <Button
+                    type="button"
                     onClick={handleValidateClick}
                     disabled={isValidating}
                     size="lg"
@@ -630,19 +682,29 @@ function InscricaoContent() {
                   <CardTitle className="text-xl sm:text-2xl">{t.publicInscription.formTitle}</CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 sm:px-6">
-                  <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                  <form
+                    onSubmit={handleSubmit}
+                    onKeyDown={handleFormKeyDown}
+                    noValidate
+                    className="space-y-4 sm:space-y-6"
+                  >
                     <div className="space-y-2">
                       <Label htmlFor="fullName" className="text-sm sm:text-base font-semibold">
                         {t.publicInscription.fullName}
                       </Label>
                       <Input
                         id="fullName"
+                        name="fullName"
+                        autoComplete="name"
+                        autoCapitalize="words"
+                        enterKeyHint="next"
                         placeholder={t.publicInscription.fullNamePlaceholder}
                         value={formData.fullName}
-                        onChange={(e) =>
-                          setFormData({ ...formData, fullName: e.target.value })
-                        }
-                        className={`h-12 min-h-[44px] ${errors.fullName ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                        onChange={(e) => {
+                          setFormData({ ...formData, fullName: e.target.value });
+                          clearFieldError('fullName');
+                        }}
+                        className={`h-12 min-h-[44px] text-base ${errors.fullName ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                       />
                       {errors.fullName && (
                         <p className="text-sm text-red-600 mt-1 font-medium">{errors.fullName}</p>
@@ -655,13 +717,18 @@ function InscricaoContent() {
                       </Label>
                       <Input
                         id="email"
+                        name="email"
                         type="email"
+                        inputMode="email"
+                        autoComplete="email"
+                        enterKeyHint="next"
                         placeholder={t.publicInscription.emailPlaceholder}
                         value={formData.email}
-                        onChange={(e) =>
-                          setFormData({ ...formData, email: e.target.value })
-                        }
-                        className={`h-12 min-h-[44px] ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                        onChange={(e) => {
+                          setFormData({ ...formData, email: e.target.value });
+                          clearFieldError('email');
+                        }}
+                        className={`h-12 min-h-[44px] text-base ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                       />
                       {errors.email && (
                         <p className="text-sm text-red-600 mt-1 font-medium">{errors.email}</p>
@@ -685,10 +752,11 @@ function InscricaoContent() {
                               documentType: types.length === 1 ? types[0] : '',
                               documento: '',
                             });
+                            clearFieldError('phoneCountry', 'phone', 'documentType', 'documento');
                           }}
                         >
                           <SelectTrigger
-                            className={`h-12 min-h-[44px] sm:w-[180px] w-full ${errors.phoneCountry ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                            className={`h-12 min-h-[44px] text-base sm:w-[180px] w-full ${errors.phoneCountry ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                           >
                             <SelectValue placeholder={t.publicInscription.countryPlaceholder} />
                           </SelectTrigger>
@@ -702,7 +770,11 @@ function InscricaoContent() {
                         </Select>
                         <Input
                           id="phone"
+                          name="phone"
                           type="tel"
+                          inputMode="tel"
+                          autoComplete="tel-national"
+                          enterKeyHint="next"
                           placeholder={
                             formData.phoneCountry
                               ? COUNTRY_PHONE_OPTIONS.find((c) => c.id === formData.phoneCountry)?.placeholder ??
@@ -723,9 +795,10 @@ function InscricaoContent() {
                             const digits = e.target.value.replace(/\D/g, '');
                             const limited = country ? digits.slice(0, country.maxDigits) : digits;
                             setFormData({ ...formData, phone: limited });
+                            clearFieldError('phone');
                           }}
                           disabled={!formData.phoneCountry}
-                          className={`h-12 min-h-[44px] flex-1 min-w-0 ${errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                          className={`h-12 min-h-[44px] text-base flex-1 min-w-0 ${errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                         />
                       </div>
                       {(errors.phoneCountry || errors.phone) && (
@@ -742,17 +815,18 @@ function InscricaoContent() {
                         </Label>
                         <Select
                           value={formData.documentType || undefined}
-                          onValueChange={(value) =>
+                          onValueChange={(value) => {
                             setFormData({
                               ...formData,
                               documentType: value as DocumentType,
                               documento: '',
-                            })
-                          }
+                            });
+                            clearFieldError('documentType', 'documento');
+                          }}
                           disabled={!formData.phoneCountry}
                         >
                           <SelectTrigger
-                            className={`h-12 min-h-[44px] ${errors.documentType ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                            className={`h-12 min-h-[44px] text-base ${errors.documentType ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                           >
                             <SelectValue placeholder={t.publicInscription.documentTypePlaceholder} />
                           </SelectTrigger>
@@ -778,6 +852,10 @@ function InscricaoContent() {
                         </Label>
                         <Input
                           id="documento"
+                          name="documento"
+                          autoComplete="off"
+                          autoCapitalize="characters"
+                          enterKeyHint="next"
                           placeholder={t.publicInscription.documentoPlaceholder}
                           value={formData.documento}
                           disabled={!formData.phoneCountry || !formData.documentType}
@@ -791,8 +869,9 @@ function InscricaoContent() {
                                 e.target.value
                               ),
                             });
+                            clearFieldError('documento');
                           }}
-                          className={`h-12 min-h-[44px] uppercase ${errors.documento ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                          className={`h-12 min-h-[44px] text-base uppercase ${errors.documento ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                         />
                         <p className="text-xs sm:text-sm text-gray-600">
                           {!formData.phoneCountry
@@ -811,10 +890,13 @@ function InscricaoContent() {
                       </Label>
                       <Select
                         value={formData.gender || undefined}
-                        onValueChange={(value) => setFormData({ ...formData, gender: value })}
+                        onValueChange={(value) => {
+                          setFormData({ ...formData, gender: value });
+                          clearFieldError('gender');
+                        }}
                       >
                         <SelectTrigger
-                          className={`h-12 min-h-[44px] ${errors.gender ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                          className={`h-12 min-h-[44px] text-base ${errors.gender ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                         >
                           <SelectValue placeholder={t.publicInscription.genderPlaceholder} />
                         </SelectTrigger>
@@ -837,10 +919,13 @@ function InscricaoContent() {
                       </Label>
                       <Select
                         value={formData.shirtSize || undefined}
-                        onValueChange={(value) => setFormData({ ...formData, shirtSize: value })}
+                        onValueChange={(value) => {
+                          setFormData({ ...formData, shirtSize: value });
+                          clearFieldError('shirtSize');
+                        }}
                       >
                         <SelectTrigger
-                          className={`h-12 min-h-[44px] ${errors.shirtSize ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                          className={`h-12 min-h-[44px] text-base ${errors.shirtSize ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                         >
                           <SelectValue placeholder={t.publicInscription.shirtSizePlaceholder} />
                         </SelectTrigger>
@@ -855,6 +940,39 @@ function InscricaoContent() {
                       {errors.shirtSize && (
                         <p className="text-sm text-red-600 mt-1 font-medium">{errors.shirtSize}</p>
                       )}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3 sm:items-start">
+                      <div className="space-y-2 w-full sm:flex-1">
+                        <Label htmlFor="flightDepartureDate" className="text-sm sm:text-base font-semibold">
+                          {t.publicInscription.flightDepartureDate}
+                        </Label>
+                        <Input
+                          id="flightDepartureDate"
+                          name="flightDepartureDate"
+                          type="date"
+                          value={formData.flightDepartureDate}
+                          onChange={(e) =>
+                            setFormData({ ...formData, flightDepartureDate: e.target.value })
+                          }
+                          className="h-12 min-h-[44px] text-base"
+                        />
+                      </div>
+                      <div className="space-y-2 w-full sm:flex-1">
+                        <Label htmlFor="flightReturnDate" className="text-sm sm:text-base font-semibold">
+                          {t.publicInscription.flightReturnDate}
+                        </Label>
+                        <Input
+                          id="flightReturnDate"
+                          name="flightReturnDate"
+                          type="date"
+                          value={formData.flightReturnDate}
+                          onChange={(e) =>
+                            setFormData({ ...formData, flightReturnDate: e.target.value })
+                          }
+                          className="h-12 min-h-[44px] text-base"
+                        />
+                      </div>
                     </div>
 
                     <div className="inscription-checkbox-novo-tempo flex items-center gap-3 py-1">
@@ -895,15 +1013,5 @@ function InscricaoContent() {
 }
 
 export default function InscricaoPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="public-area min-h-screen flex items-center justify-center">
-          <Loader2 className="h-10 w-10 animate-spin text-white" />
-        </div>
-      }
-    >
-      <InscricaoContent />
-    </Suspense>
-  );
+  return <InscricaoContent />;
 }

@@ -62,9 +62,11 @@ interface Registration {
   link_or_handle?: string;
   wants_to_know_novo_tempo?: boolean;
   flight_departure_time?: string;
+  flight_departure_date?: string;
   flight_departure_airline?: string;
   flight_departure_number?: string;
   flight_return_time?: string;
+  flight_return_date?: string;
   flight_return_airline?: string;
   flight_return_number?: string;
   role?: string;
@@ -338,9 +340,11 @@ export default function RegistrationsPage() {
         [t.admin.registrations.linkOrHandle]: reg.link_or_handle ?? '',
         [t.admin.registrations.visitation]:
           reg.wants_to_know_novo_tempo === true ? t.common.yes : t.common.no,
+        [t.admin.registrations.flightDepartureDate]: reg.flight_departure_date ?? '',
         [t.admin.registrations.flightDepartureAirline]: reg.flight_departure_airline ?? '',
         [t.admin.registrations.flightDepartureNumber]: reg.flight_departure_number ?? '',
         [t.admin.registrations.flightDepartureTime]: reg.flight_departure_time ?? '',
+        [t.admin.registrations.flightReturnDate]: reg.flight_return_date ?? '',
         [t.admin.registrations.flightReturnAirline]: reg.flight_return_airline ?? '',
         [t.admin.registrations.flightReturnNumber]: reg.flight_return_number ?? '',
         [t.admin.registrations.flightReturnTime]: reg.flight_return_time ?? '',

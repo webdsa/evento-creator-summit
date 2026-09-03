@@ -7,6 +7,24 @@ import { validateDocument } from '@/lib/document';
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino'] as const;
 const SHIRT_SIZE_OPTIONS = ['PP', 'P', 'M', 'G', 'GG', 'XG'] as const;
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+function parseOptionalDate(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (!DATE_REGEX.test(trimmed)) return '';
+  const [year, month, day] = trimmed.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return '';
+  }
+  return trimmed;
+}
 
 interface RegistrationRequest {
   voucherCode: string;
@@ -19,6 +37,8 @@ interface RegistrationRequest {
   documentType: string;
   documento: string;
   wantsToKnowNovoTempo?: boolean;
+  flightDepartureDate?: string;
+  flightReturnDate?: string;
   language: 'pt-BR' | 'es';
 }
 
@@ -55,6 +75,8 @@ export async function POST(request: NextRequest) {
     documentType,
     documento,
     wantsToKnowNovoTempo,
+    flightDepartureDate,
+    flightReturnDate,
     language,
   } = body;
 
@@ -65,6 +87,8 @@ export async function POST(request: NextRequest) {
   const rawGender = String(gender ?? '').trim();
   const rawShirtSize = String(shirtSize ?? '').trim();
   const rawWantsToKnowNovoTempo = wantsToKnowNovoTempo === true;
+  const parsedFlightDepartureDate = parseOptionalDate(flightDepartureDate);
+  const parsedFlightReturnDate = parseOptionalDate(flightReturnDate);
   const parsedDocument = validateDocument(
     String(documentCountry ?? ''),
     String(documentType ?? ''),
@@ -93,6 +117,13 @@ export async function POST(request: NextRequest) {
   if (!parsedDocument.ok) {
     return NextResponse.json(
       { error: 'invalidDocumento' },
+      { status: 400 }
+    );
+  }
+
+  if (parsedFlightDepartureDate === '' || parsedFlightReturnDate === '') {
+    return NextResponse.json(
+      { error: 'invalidRequest' },
       { status: 400 }
     );
   }
@@ -152,6 +183,8 @@ export async function POST(request: NextRequest) {
       p_document_country: parsedDocument.country,
       p_document_type: parsedDocument.type,
       p_wants_to_know_novo_tempo: rawWantsToKnowNovoTempo,
+      p_flight_departure_date: parsedFlightDepartureDate,
+      p_flight_return_date: parsedFlightReturnDate,
       p_language: language,
     });
 
@@ -263,6 +296,8 @@ export async function POST(request: NextRequest) {
       documentType: registration.document_type,
       documentCountry: registration.document_country,
       wantsToKnowNovoTempo: registration.wants_to_know_novo_tempo ?? false,
+      flightDepartureDate: registration.flight_departure_date,
+      flightReturnDate: registration.flight_return_date,
       institution: institutionName,
       language: registration.language,
     });

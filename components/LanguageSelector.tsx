@@ -25,6 +25,7 @@ export function LanguageSelector({ theme = 'light' }: LanguageSelectorProps) {
       }
     >
       <Button
+        type="button"
         variant="ghost"
         size="sm"
         onClick={() => setLanguage('pt-BR')}
@@ -44,6 +45,7 @@ export function LanguageSelector({ theme = 'light' }: LanguageSelectorProps) {
         </span>
       </Button>
       <Button
+        type="button"
         variant="ghost"
         size="sm"
         onClick={() => setLanguage('es')}

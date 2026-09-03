@@ -72,12 +72,16 @@ export async function PATCH(
       typeof body.document_type === 'string' ? body.document_type.trim() || undefined : undefined;
     const conteudo = typeof body.conteudo === 'string' ? body.conteudo.trim() || undefined : undefined;
     const linkOrHandle = typeof body.link_or_handle === 'string' ? body.link_or_handle.trim() || undefined : undefined;
+    const flightDepartureDate =
+      typeof body.flight_departure_date === 'string' ? body.flight_departure_date.trim() || undefined : undefined;
     const flightDepartureTime =
       typeof body.flight_departure_time === 'string' ? body.flight_departure_time.trim() || undefined : undefined;
     const flightDepartureAirline =
       typeof body.flight_departure_airline === 'string' ? body.flight_departure_airline.trim() || undefined : undefined;
     const flightDepartureNumber =
       typeof body.flight_departure_number === 'string' ? body.flight_departure_number.trim() || undefined : undefined;
+    const flightReturnDate =
+      typeof body.flight_return_date === 'string' ? body.flight_return_date.trim() || undefined : undefined;
     const flightReturnTime =
       typeof body.flight_return_time === 'string' ? body.flight_return_time.trim() || undefined : undefined;
     const flightReturnAirline =
@@ -126,9 +130,11 @@ export async function PATCH(
     if (conteudo !== undefined) updates.conteudo = conteudo;
     if (linkOrHandle !== undefined) updates.link_or_handle = linkOrHandle;
     if (wantsToKnowNovoTempo !== undefined) updates.wants_to_know_novo_tempo = wantsToKnowNovoTempo;
+    if (flightDepartureDate !== undefined) updates.flight_departure_date = flightDepartureDate;
     if (flightDepartureTime !== undefined) updates.flight_departure_time = flightDepartureTime;
     if (flightDepartureAirline !== undefined) updates.flight_departure_airline = flightDepartureAirline;
     if (flightDepartureNumber !== undefined) updates.flight_departure_number = flightDepartureNumber;
+    if (flightReturnDate !== undefined) updates.flight_return_date = flightReturnDate;
     if (flightReturnTime !== undefined) updates.flight_return_time = flightReturnTime;
     if (flightReturnAirline !== undefined) updates.flight_return_airline = flightReturnAirline;
     if (flightReturnNumber !== undefined) updates.flight_return_number = flightReturnNumber;

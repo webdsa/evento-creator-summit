@@ -53,9 +53,11 @@ interface RegistrationData {
   link_or_handle?: string;
   wants_to_know_novo_tempo?: boolean;
   flight_departure_time?: string;
+  flight_departure_date?: string;
   flight_departure_airline?: string;
   flight_departure_number?: string;
   flight_return_time?: string;
+  flight_return_date?: string;
   flight_return_airline?: string;
   flight_return_number?: string;
   role?: string;
@@ -97,9 +99,11 @@ export default function EditRegistrationPage() {
     link_or_handle: '',
     wants_to_know_novo_tempo: '' as '' | 'yes' | 'no',
     flight_departure_time: '',
+    flight_departure_date: '',
     flight_departure_airline: '',
     flight_departure_number: '',
     flight_return_time: '',
+    flight_return_date: '',
     flight_return_airline: '',
     flight_return_number: '',
     role: '',
@@ -138,9 +142,11 @@ export default function EditRegistrationPage() {
           wants_to_know_novo_tempo:
             data.wants_to_know_novo_tempo === true ? 'yes' : data.wants_to_know_novo_tempo === false ? 'no' : '',
           flight_departure_time: data.flight_departure_time ?? '',
+          flight_departure_date: data.flight_departure_date ?? '',
           flight_departure_airline: data.flight_departure_airline ?? '',
           flight_departure_number: data.flight_departure_number ?? '',
           flight_return_time: data.flight_return_time ?? '',
+          flight_return_date: data.flight_return_date ?? '',
           flight_return_airline: data.flight_return_airline ?? '',
           flight_return_number: data.flight_return_number ?? '',
           role: data.role ?? '',
@@ -196,9 +202,11 @@ export default function EditRegistrationPage() {
                 ? false
                 : undefined,
           flight_departure_time: formData.flight_departure_time || undefined,
+          flight_departure_date: formData.flight_departure_date || undefined,
           flight_departure_airline: formData.flight_departure_airline.trim() || undefined,
           flight_departure_number: formData.flight_departure_number.trim() || undefined,
           flight_return_time: formData.flight_return_time || undefined,
+          flight_return_date: formData.flight_return_date || undefined,
           flight_return_airline: formData.flight_return_airline.trim() || undefined,
           flight_return_number: formData.flight_return_number.trim() || undefined,
           role: formData.role || undefined,
@@ -225,9 +233,11 @@ export default function EditRegistrationPage() {
         wants_to_know_novo_tempo:
           updated.wants_to_know_novo_tempo === true ? 'yes' : updated.wants_to_know_novo_tempo === false ? 'no' : '',
         flight_departure_time: updated.flight_departure_time ?? '',
+        flight_departure_date: updated.flight_departure_date ?? '',
         flight_departure_airline: updated.flight_departure_airline ?? '',
         flight_departure_number: updated.flight_departure_number ?? '',
         flight_return_time: updated.flight_return_time ?? '',
+        flight_return_date: updated.flight_return_date ?? '',
         flight_return_airline: updated.flight_return_airline ?? '',
         flight_return_number: updated.flight_return_number ?? '',
         role: updated.role ?? '',
@@ -537,6 +547,26 @@ export default function EditRegistrationPage() {
                   value={formData.link_or_handle}
                   onChange={(e) => setFormData({ ...formData, link_or_handle: e.target.value })}
                   placeholder={t.publicInscription.linkOrHandlePlaceholder}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="flight_departure_date">{t.admin.registrations.flightDepartureDate}</Label>
+                <Input
+                  id="flight_departure_date"
+                  type="date"
+                  value={formData.flight_departure_date}
+                  onChange={(e) => setFormData({ ...formData, flight_departure_date: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="flight_return_date">{t.admin.registrations.flightReturnDate}</Label>
+                <Input
+                  id="flight_return_date"
+                  type="date"
+                  value={formData.flight_return_date}
+                  onChange={(e) => setFormData({ ...formData, flight_return_date: e.target.value })}
                 />
               </div>
             </div>

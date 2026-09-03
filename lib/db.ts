@@ -74,9 +74,11 @@ export interface Registration {
   link_or_handle?: string;
   wants_to_know_novo_tempo?: boolean;
   flight_departure_time?: string;
+  flight_departure_date?: string;
   flight_departure_airline?: string;
   flight_departure_number?: string;
   flight_return_time?: string;
+  flight_return_date?: string;
   flight_return_airline?: string;
   flight_return_number?: string;
   role?: string;
@@ -854,9 +856,11 @@ export async function createRegistration(params: {
   p_link_or_handle?: string;
   p_wants_to_know_novo_tempo: boolean;
   p_flight_departure_time?: string;
+  p_flight_departure_date?: string;
   p_flight_departure_airline?: string;
   p_flight_departure_number?: string;
   p_flight_return_time?: string;
+  p_flight_return_date?: string;
   p_flight_return_airline?: string;
   p_flight_return_number?: string;
   p_role?: string;
@@ -879,9 +883,11 @@ export async function createRegistration(params: {
     p_link_or_handle,
     p_wants_to_know_novo_tempo,
     p_flight_departure_time,
+    p_flight_departure_date,
     p_flight_departure_airline,
     p_flight_departure_number,
     p_flight_return_time,
+    p_flight_return_date,
     p_flight_return_airline,
     p_flight_return_number,
     p_role,
@@ -938,9 +944,11 @@ export async function createRegistration(params: {
     link_or_handle: p_link_or_handle || undefined,
     wants_to_know_novo_tempo: p_wants_to_know_novo_tempo,
     flight_departure_time: p_flight_departure_time || undefined,
+    flight_departure_date: p_flight_departure_date || undefined,
     flight_departure_airline: p_flight_departure_airline || undefined,
     flight_departure_number: p_flight_departure_number || undefined,
     flight_return_time: p_flight_return_time || undefined,
+    flight_return_date: p_flight_return_date || undefined,
     flight_return_airline: p_flight_return_airline || undefined,
     flight_return_number: p_flight_return_number || undefined,
     role: p_role || undefined,
@@ -1222,9 +1230,11 @@ export type UpdateRegistrationData = Partial<
     | 'link_or_handle'
     | 'wants_to_know_novo_tempo'
     | 'flight_departure_time'
+    | 'flight_departure_date'
     | 'flight_departure_airline'
     | 'flight_departure_number'
     | 'flight_return_time'
+    | 'flight_return_date'
     | 'flight_return_airline'
     | 'flight_return_number'
     | 'role'
