@@ -550,7 +550,7 @@ export default function EditRegistrationPage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="flight_departure_date">{t.admin.registrations.flightDepartureDate}</Label>
                 <Input
@@ -560,17 +560,6 @@ export default function EditRegistrationPage() {
                   onChange={(e) => setFormData({ ...formData, flight_departure_date: e.target.value })}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="flight_return_date">{t.admin.registrations.flightReturnDate}</Label>
-                <Input
-                  id="flight_return_date"
-                  type="date"
-                  value={formData.flight_return_date}
-                  onChange={(e) => setFormData({ ...formData, flight_return_date: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="flight_departure_airline">{t.admin.registrations.flightDepartureAirline}</Label>
                 <Input
@@ -599,7 +588,16 @@ export default function EditRegistrationPage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="flight_return_date">{t.admin.registrations.flightReturnDate}</Label>
+                <Input
+                  id="flight_return_date"
+                  type="date"
+                  value={formData.flight_return_date}
+                  onChange={(e) => setFormData({ ...formData, flight_return_date: e.target.value })}
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="flight_return_airline">{t.admin.registrations.flightReturnAirline}</Label>
                 <Input

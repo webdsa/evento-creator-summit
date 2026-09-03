@@ -942,8 +942,8 @@ function InscricaoContent() {
                       )}
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-3 sm:items-start">
-                      <div className="space-y-2 w-full sm:flex-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="space-y-2">
                         <Label htmlFor="flightDepartureDate" className="text-sm sm:text-base font-semibold">
                           {t.publicInscription.flightDepartureDate}
                         </Label>
@@ -958,7 +958,7 @@ function InscricaoContent() {
                           className="h-12 min-h-[44px] text-base"
                         />
                       </div>
-                      <div className="space-y-2 w-full sm:flex-1">
+                      <div className="space-y-2">
                         <Label htmlFor="flightReturnDate" className="text-sm sm:text-base font-semibold">
                           {t.publicInscription.flightReturnDate}
                         </Label>
