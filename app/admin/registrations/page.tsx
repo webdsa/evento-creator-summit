@@ -161,10 +161,19 @@ export default function RegistrationsPage() {
   }, [user]);
 
   useEffect(() => {
-    const nameLower = filterName.trim().toLowerCase();
+    const query = filterName.trim().toLowerCase();
+    const queryAlnum = query.replace(/[^a-z0-9]/g, '');
 
     const filtered = registrations.filter((reg) => {
-      if (nameLower && !reg.full_name.toLowerCase().includes(nameLower)) return false;
+      if (query) {
+        const nameMatch = (reg.full_name ?? '').toLowerCase().includes(query);
+        const documento = (reg.documento ?? '').toLowerCase();
+        const documentoAlnum = documento.replace(/[^a-z0-9]/g, '');
+        const documentoMatch =
+          documento.includes(query) ||
+          (queryAlnum.length > 0 && documentoAlnum.includes(queryAlnum));
+        if (!nameMatch && !documentoMatch) return false;
+      }
       if (filterInstitution && getInstitutionName(reg) !== filterInstitution) return false;
       if (filterTravel === 'own' && reg.own_transport !== true) return false;
       if (filterTravel === 'flight' && (reg.own_transport === true || !hasFlightData(reg))) return false;
@@ -400,7 +409,7 @@ export default function RegistrationsPage() {
             <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-gray-700">
-                  {t.admin.registrations.fullName}
+                  {t.admin.registrations.fullName} / {t.admin.registrations.documento}
                 </label>
                 <Input
                   placeholder={t.common.search}
