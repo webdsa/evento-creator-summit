@@ -218,7 +218,10 @@ export default function EditRegistrationPage() {
           language: formData.language,
         }),
       });
-      if (!res.ok) throw new Error('Update failed');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(typeof data?.error === 'string' ? data.error : 'genericError');
+      }
       const updated: RegistrationData = await res.json();
       setRegistration(updated);
       setFormData({
@@ -254,11 +257,13 @@ export default function EditRegistrationPage() {
         description: t.admin.registrations.saved,
       });
       router.push('/admin/registrations');
-    } catch {
+    } catch (error) {
+      const code = error instanceof Error ? error.message : '';
+      const message = (t.errors as Record<string, string>)[code];
       toast({
         variant: 'destructive',
         title: t.common.error,
-        description: t.errors.genericError,
+        description: message ?? t.errors.genericError,
       });
     } finally {
       setSaving(false);

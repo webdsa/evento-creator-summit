@@ -183,6 +183,7 @@ export interface Dictionary {
   errors: {
     requiredField: string;
     invalidDocumento: string;
+    invalidLinkOrHandle: string;
     documentAlreadyRegistered: string;
     invalidEmail: string;
     invalidPhone: string;
@@ -746,6 +747,7 @@ export const dictionaries: Record<Language, Dictionary> = {
     errors: {
       requiredField: 'Este campo é obrigatório',
       invalidDocumento: 'Documento inválido para o país e o tipo selecionados.',
+      invalidLinkOrHandle: 'Link ou @ inválido. Use um @usuario ou uma URL completa.',
       documentAlreadyRegistered: 'Este documento já está inscrito',
       invalidEmail: 'E-mail inválido',
       invalidPhone: 'Telefone inválido',
@@ -1309,6 +1311,7 @@ export const dictionaries: Record<Language, Dictionary> = {
     errors: {
       requiredField: 'Este campo es obligatorio',
       invalidDocumento: 'Documento inválido para el país y el tipo seleccionados.',
+      invalidLinkOrHandle: 'Enlace o @ inválido. Use un @usuario o una URL completa.',
       documentAlreadyRegistered: 'Este documento ya está inscrito',
       invalidEmail: 'Correo electrónico inválido',
       invalidPhone: 'Teléfono inválido',

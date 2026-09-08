@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 const MAX_HANDLE_LENGTH = 100;
 const MAX_HANDLE_URL_LENGTH = 300;
-const HANDLE_PATTERN = /^@[A-Za-z0-9._]{2,50}$/;
+const HANDLE_PATTERN = /^@[A-Za-z0-9._-]{2,50}$/;
 
 /** Normaliza arroba (@usuario) ou URL de perfil. */
 export function normalizeLinkOrHandle(value: string): string {

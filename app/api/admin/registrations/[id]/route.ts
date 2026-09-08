@@ -72,10 +72,10 @@ export async function PATCH(
     const documentType =
       typeof body.document_type === 'string' ? body.document_type.trim() || undefined : undefined;
     const conteudo = typeof body.conteudo === 'string' ? body.conteudo.trim() || undefined : undefined;
+    const rawLinkOrHandle =
+      typeof body.link_or_handle === 'string' ? body.link_or_handle.trim() : undefined;
     const linkOrHandle =
-      typeof body.link_or_handle === 'string'
-        ? normalizeLinkOrHandle(body.link_or_handle) || undefined
-        : undefined;
+      rawLinkOrHandle !== undefined ? normalizeLinkOrHandle(rawLinkOrHandle) || undefined : undefined;
     const flightDepartureDate =
       typeof body.flight_departure_date === 'string' ? body.flight_departure_date.trim() || undefined : undefined;
     const flightDepartureTime =
@@ -116,10 +116,19 @@ export async function PATCH(
     if (campo !== undefined) updates.campo = campo;
     if (plataforma !== undefined) updates.plataforma = plataforma;
     if (seguidores !== undefined && Number.isInteger(seguidores)) updates.seguidores = seguidores;
-    const nextCountry = documentCountry ?? registration.document_country ?? '';
-    const nextType = documentType ?? registration.document_type ?? '';
-    const nextNumber = documento ?? registration.documento ?? '';
-    if (nextCountry && nextType && nextNumber) {
+    const currentCountry = registration.document_country ?? '';
+    const currentType = registration.document_type ?? '';
+    const currentNumber = registration.documento ?? '';
+    const nextCountry = documentCountry ?? currentCountry;
+    const nextType = documentType ?? currentType;
+    const nextNumber = documento ?? currentNumber;
+    // Registros antigos podem ter documento fora do padrão atual; só validamos o que mudou
+    // para não bloquear a edição dos demais campos.
+    const documentChanged =
+      nextCountry !== currentCountry ||
+      nextType !== currentType ||
+      nextNumber.toUpperCase() !== currentNumber.toUpperCase();
+    if (nextCountry && nextType && nextNumber && documentChanged) {
       const parsed = validateDocument(nextCountry, nextType, nextNumber);
       if (!parsed.ok) {
         return NextResponse.json({ error: 'invalidDocumento' }, { status: 400 });
@@ -133,9 +142,9 @@ export async function PATCH(
       if (documentType !== undefined) updates.document_type = documentType;
     }
     if (conteudo !== undefined) updates.conteudo = conteudo;
-    if (linkOrHandle !== undefined) {
+    if (linkOrHandle !== undefined && rawLinkOrHandle !== (registration.link_or_handle ?? '')) {
       if (!isValidLinkOrHandle(linkOrHandle)) {
-        return NextResponse.json({ error: 'invalidRequest' }, { status: 400 });
+        return NextResponse.json({ error: 'invalidLinkOrHandle' }, { status: 400 });
       }
       updates.link_or_handle = linkOrHandle;
     }
