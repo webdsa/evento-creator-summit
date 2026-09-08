@@ -35,8 +35,12 @@ export default function RootLayout({
             {children}
             <Toaster />
             <DevAutoReload />
-            <Analytics />
-            <SpeedInsights />
+            {process.env.NODE_ENV === 'production' && (
+              <>
+                <Analytics />
+                <SpeedInsights />
+              </>
+            )}
           </AuthProvider>
         </LanguageProvider>
       </body>

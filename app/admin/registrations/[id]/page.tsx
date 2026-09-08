@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -52,6 +53,7 @@ interface RegistrationData {
   conteudo?: string;
   link_or_handle?: string;
   wants_to_know_novo_tempo?: boolean;
+  own_transport?: boolean;
   flight_departure_time?: string;
   flight_departure_date?: string;
   flight_departure_airline?: string;
@@ -98,6 +100,7 @@ export default function EditRegistrationPage() {
     conteudo: '',
     link_or_handle: '',
     wants_to_know_novo_tempo: '' as '' | 'yes' | 'no',
+    own_transport: false,
     flight_departure_time: '',
     flight_departure_date: '',
     flight_departure_airline: '',
@@ -141,6 +144,7 @@ export default function EditRegistrationPage() {
           link_or_handle: data.link_or_handle ?? '',
           wants_to_know_novo_tempo:
             data.wants_to_know_novo_tempo === true ? 'yes' : data.wants_to_know_novo_tempo === false ? 'no' : '',
+          own_transport: data.own_transport === true,
           flight_departure_time: data.flight_departure_time ?? '',
           flight_departure_date: data.flight_departure_date ?? '',
           flight_departure_airline: data.flight_departure_airline ?? '',
@@ -201,14 +205,15 @@ export default function EditRegistrationPage() {
               : formData.wants_to_know_novo_tempo === 'no'
                 ? false
                 : undefined,
-          flight_departure_time: formData.flight_departure_time || undefined,
-          flight_departure_date: formData.flight_departure_date || undefined,
-          flight_departure_airline: formData.flight_departure_airline.trim() || undefined,
-          flight_departure_number: formData.flight_departure_number.trim() || undefined,
-          flight_return_time: formData.flight_return_time || undefined,
-          flight_return_date: formData.flight_return_date || undefined,
-          flight_return_airline: formData.flight_return_airline.trim() || undefined,
-          flight_return_number: formData.flight_return_number.trim() || undefined,
+          own_transport: formData.own_transport,
+          flight_departure_time: formData.own_transport ? '' : formData.flight_departure_time || undefined,
+          flight_departure_date: formData.own_transport ? '' : formData.flight_departure_date || undefined,
+          flight_departure_airline: formData.own_transport ? '' : formData.flight_departure_airline.trim() || undefined,
+          flight_departure_number: formData.own_transport ? '' : formData.flight_departure_number.trim() || undefined,
+          flight_return_time: formData.own_transport ? '' : formData.flight_return_time || undefined,
+          flight_return_date: formData.own_transport ? '' : formData.flight_return_date || undefined,
+          flight_return_airline: formData.own_transport ? '' : formData.flight_return_airline.trim() || undefined,
+          flight_return_number: formData.own_transport ? '' : formData.flight_return_number.trim() || undefined,
           role: formData.role || undefined,
           language: formData.language,
         }),
@@ -232,6 +237,7 @@ export default function EditRegistrationPage() {
         link_or_handle: updated.link_or_handle ?? '',
         wants_to_know_novo_tempo:
           updated.wants_to_know_novo_tempo === true ? 'yes' : updated.wants_to_know_novo_tempo === false ? 'no' : '',
+        own_transport: updated.own_transport === true,
         flight_departure_time: updated.flight_departure_time ?? '',
         flight_departure_date: updated.flight_departure_date ?? '',
         flight_departure_airline: updated.flight_departure_airline ?? '',
@@ -550,6 +556,35 @@ export default function EditRegistrationPage() {
                 />
               </div>
             </div>
+            <div className="flex items-center gap-3 py-1">
+              <Checkbox
+                id="own_transport"
+                checked={formData.own_transport}
+                onCheckedChange={(checked) =>
+                  setFormData({
+                    ...formData,
+                    own_transport: checked === true,
+                    ...(checked === true
+                      ? {
+                          flight_departure_time: '',
+                          flight_departure_date: '',
+                          flight_departure_airline: '',
+                          flight_departure_number: '',
+                          flight_return_time: '',
+                          flight_return_date: '',
+                          flight_return_airline: '',
+                          flight_return_number: '',
+                        }
+                      : {}),
+                  })
+                }
+              />
+              <Label htmlFor="own_transport" className="cursor-pointer font-medium">
+                {t.admin.registrations.ownTransport}
+              </Label>
+            </div>
+            {!formData.own_transport && (
+            <>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="flight_departure_date">{t.admin.registrations.flightDepartureDate}</Label>
@@ -626,6 +661,8 @@ export default function EditRegistrationPage() {
                 />
               </div>
             </div>
+            </>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="max-w-xs space-y-2">
                 <Label>{t.admin.registrations.language}</Label>

@@ -107,6 +107,7 @@ export interface Dictionary {
     linkOrHandle: string;
     linkOrHandlePlaceholder: string;
     wantsToKnowNovoTempo: string;
+    ownTransport: string;
     flightDepartureDate: string;
     flightReturnDate: string;
     flightDepartureTime: string;
@@ -477,6 +478,7 @@ export interface Dictionary {
       documentCountry: string;
       conteudo: string;
       linkOrHandle: string;
+      ownTransport: string;
       flightDepartureDate: string;
       flightReturnDate: string;
       flightDepartureTime: string;
@@ -488,6 +490,10 @@ export interface Dictionary {
       visitation: string;
       checkinFilter: string;
       checkinDateTimeColumn: string;
+      travelFilter: string;
+      travelOwnTransport: string;
+      travelWithFlight: string;
+      travelWithoutFlight: string;
       role: string;
       institution: string;
       voucher: string;
@@ -652,9 +658,10 @@ export const dictionaries: Record<Language, Dictionary> = {
       },
       conteudo: 'Conteúdo',
       conteudoPlaceholder: 'Tipo ou descrição do conteúdo',
-      linkOrHandle: 'Link ou @',
-      linkOrHandlePlaceholder: 'Ex: @seuperfil ou https://...',
+      linkOrHandle: 'Arroba',
+      linkOrHandlePlaceholder: 'Ex: @seuperfil',
       wantsToKnowNovoTempo: 'Desejo conhecer a estrutura da Novo Tempo.',
+      ownTransport: 'Vou com transporte próprio.',
       flightDepartureDate: 'Data voo ida',
       flightReturnDate: 'Data voo volta',
       flightDepartureTime: 'Horário voo ida',
@@ -1034,7 +1041,8 @@ export const dictionaries: Record<Language, Dictionary> = {
       documentType: 'Tipo de documento',
       documentCountry: 'País do documento',
       conteudo: 'Conteúdo',
-      linkOrHandle: 'Link ou @',
+      linkOrHandle: 'Arroba',
+      ownTransport: 'Transporte próprio',
       flightDepartureDate: 'Data voo ida',
       flightReturnDate: 'Data voo volta',
       flightDepartureTime: 'Horário voo ida',
@@ -1046,6 +1054,10 @@ export const dictionaries: Record<Language, Dictionary> = {
       visitation: 'Visitação Novo Tempo',
       checkinFilter: 'Check-in',
       checkinDateTimeColumn: 'Data/hora do check-in',
+      travelFilter: 'Deslocamento',
+      travelOwnTransport: 'Transporte próprio',
+      travelWithFlight: 'Com dados do voo',
+      travelWithoutFlight: 'Sem dados do voo',
       role: 'Função',
       institution: 'Instituição',
       voucher: 'Voucher',
@@ -1209,9 +1221,10 @@ export const dictionaries: Record<Language, Dictionary> = {
       },
       conteudo: 'Contenido',
       conteudoPlaceholder: 'Tipo o descripción del contenido',
-      linkOrHandle: 'Link o @',
-      linkOrHandlePlaceholder: 'Ej: @tuperfil o https://...',
+      linkOrHandle: 'Arroba',
+      linkOrHandlePlaceholder: 'Ej: @tuperfil',
       wantsToKnowNovoTempo: 'Deseo conocer la estructura de Nuevo Tiempo.',
+      ownTransport: 'Viajaré con transporte propio.',
       flightDepartureDate: 'Fecha vuelo ida',
       flightReturnDate: 'Fecha vuelo vuelta',
       flightDepartureTime: 'Horario vuelo ida',
@@ -1591,7 +1604,8 @@ export const dictionaries: Record<Language, Dictionary> = {
         documentType: 'Tipo de documento',
         documentCountry: 'País del documento',
         conteudo: 'Contenido',
-        linkOrHandle: 'Link o @',
+        linkOrHandle: 'Arroba',
+        ownTransport: 'Transporte propio',
         flightDepartureDate: 'Fecha vuelo ida',
         flightReturnDate: 'Fecha vuelo vuelta',
         flightDepartureTime: 'Horario vuelo ida',
@@ -1603,6 +1617,10 @@ export const dictionaries: Record<Language, Dictionary> = {
         visitation: 'Visita Nuevo Tiempo',
         checkinFilter: 'Check-in',
         checkinDateTimeColumn: 'Fecha y hora del check-in',
+        travelFilter: 'Desplazamiento',
+        travelOwnTransport: 'Transporte propio',
+        travelWithFlight: 'Con datos de vuelo',
+        travelWithoutFlight: 'Sin datos de vuelo',
         role: 'Función',
         institution: 'Institución',
         voucher: 'Voucher',

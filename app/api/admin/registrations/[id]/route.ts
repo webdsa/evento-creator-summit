@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { canAccessRegistration, requireRegistrationsAccess, type StaffAccess } from '@/lib/auth';
 import { deleteRegistration, getRegistrationById, updateRegistration } from '@/lib/db';
 import { validateDocument } from '@/lib/document';
+import { isValidLinkOrHandle, normalizeLinkOrHandle } from '@/lib/utils';
 
 async function checkAuth(request: NextRequest): Promise<StaffAccess> {
   const authHeader = request.headers.get('authorization');
@@ -71,7 +72,10 @@ export async function PATCH(
     const documentType =
       typeof body.document_type === 'string' ? body.document_type.trim() || undefined : undefined;
     const conteudo = typeof body.conteudo === 'string' ? body.conteudo.trim() || undefined : undefined;
-    const linkOrHandle = typeof body.link_or_handle === 'string' ? body.link_or_handle.trim() || undefined : undefined;
+    const linkOrHandle =
+      typeof body.link_or_handle === 'string'
+        ? normalizeLinkOrHandle(body.link_or_handle) || undefined
+        : undefined;
     const flightDepartureDate =
       typeof body.flight_departure_date === 'string' ? body.flight_departure_date.trim() || undefined : undefined;
     const flightDepartureTime =
@@ -92,6 +96,7 @@ export async function PATCH(
     const language = body.language === 'pt-BR' || body.language === 'es' ? body.language : undefined;
     const wantsToKnowNovoTempo =
       typeof body.wants_to_know_novo_tempo === 'boolean' ? body.wants_to_know_novo_tempo : undefined;
+    const ownTransport = typeof body.own_transport === 'boolean' ? body.own_transport : undefined;
     const seguidores =
       typeof body.seguidores === 'number' && Number.isFinite(body.seguidores)
         ? body.seguidores
@@ -128,16 +133,33 @@ export async function PATCH(
       if (documentType !== undefined) updates.document_type = documentType;
     }
     if (conteudo !== undefined) updates.conteudo = conteudo;
-    if (linkOrHandle !== undefined) updates.link_or_handle = linkOrHandle;
+    if (linkOrHandle !== undefined) {
+      if (!isValidLinkOrHandle(linkOrHandle)) {
+        return NextResponse.json({ error: 'invalidRequest' }, { status: 400 });
+      }
+      updates.link_or_handle = linkOrHandle;
+    }
     if (wantsToKnowNovoTempo !== undefined) updates.wants_to_know_novo_tempo = wantsToKnowNovoTempo;
-    if (flightDepartureDate !== undefined) updates.flight_departure_date = flightDepartureDate;
-    if (flightDepartureTime !== undefined) updates.flight_departure_time = flightDepartureTime;
-    if (flightDepartureAirline !== undefined) updates.flight_departure_airline = flightDepartureAirline;
-    if (flightDepartureNumber !== undefined) updates.flight_departure_number = flightDepartureNumber;
-    if (flightReturnDate !== undefined) updates.flight_return_date = flightReturnDate;
-    if (flightReturnTime !== undefined) updates.flight_return_time = flightReturnTime;
-    if (flightReturnAirline !== undefined) updates.flight_return_airline = flightReturnAirline;
-    if (flightReturnNumber !== undefined) updates.flight_return_number = flightReturnNumber;
+    if (ownTransport !== undefined) updates.own_transport = ownTransport;
+    if (ownTransport === true) {
+      updates.flight_departure_date = '';
+      updates.flight_departure_time = '';
+      updates.flight_departure_airline = '';
+      updates.flight_departure_number = '';
+      updates.flight_return_date = '';
+      updates.flight_return_time = '';
+      updates.flight_return_airline = '';
+      updates.flight_return_number = '';
+    } else {
+      if (flightDepartureDate !== undefined) updates.flight_departure_date = flightDepartureDate;
+      if (flightDepartureTime !== undefined) updates.flight_departure_time = flightDepartureTime;
+      if (flightDepartureAirline !== undefined) updates.flight_departure_airline = flightDepartureAirline;
+      if (flightDepartureNumber !== undefined) updates.flight_departure_number = flightDepartureNumber;
+      if (flightReturnDate !== undefined) updates.flight_return_date = flightReturnDate;
+      if (flightReturnTime !== undefined) updates.flight_return_time = flightReturnTime;
+      if (flightReturnAirline !== undefined) updates.flight_return_airline = flightReturnAirline;
+      if (flightReturnNumber !== undefined) updates.flight_return_number = flightReturnNumber;
+    }
     if (role !== undefined) updates.role = role;
     if (language !== undefined) updates.language = language;
 

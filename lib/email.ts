@@ -19,6 +19,7 @@ export interface RegistrationForEmail {
   gender?: string;
   shirt_size?: string;
   role?: string;
+  link_or_handle?: string;
   registration_code: string;
   language: Language;
 }
@@ -105,6 +106,11 @@ const emailTemplates: Record<
         <div class="detail-row">
           <span class="detail-label">Telefone:</span> ${registration.phone}
         </div>
+        ${registration.link_or_handle ? `
+        <div class="detail-row">
+          <span class="detail-label">Arroba:</span> ${registration.link_or_handle}
+        </div>
+        ` : ''}
         <div class="detail-row">
           <span class="detail-label">Instituição:</span> ${institutionName}
         </div>
@@ -182,6 +188,11 @@ const emailTemplates: Record<
         <div class="detail-row">
           <span class="detail-label">Teléfono:</span> ${registration.phone}
         </div>
+        ${registration.link_or_handle ? `
+        <div class="detail-row">
+          <span class="detail-label">Arroba:</span> ${registration.link_or_handle}
+        </div>
+        ` : ''}
         <div class="detail-row">
           <span class="detail-label">Institución:</span> ${institutionName}
         </div>

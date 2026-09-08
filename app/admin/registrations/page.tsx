@@ -61,6 +61,7 @@ interface Registration {
   conteudo?: string;
   link_or_handle?: string;
   wants_to_know_novo_tempo?: boolean;
+  own_transport?: boolean;
   flight_departure_time?: string;
   flight_departure_date?: string;
   flight_departure_airline?: string;
@@ -97,9 +98,8 @@ export default function RegistrationsPage() {
   const [loading, setLoading] = useState(true);
   const [filterName, setFilterName] = useState('');
   const [filterInstitution, setFilterInstitution] = useState('');
-  const [filterRole, setFilterRole] = useState('');
+  const [filterTravel, setFilterTravel] = useState<'' | 'own' | 'flight' | 'no_flight'>('');
   const [filterCheckin, setFilterCheckin] = useState<'' | 'yes' | 'no'>('');
-  const [filterLanguage, setFilterLanguage] = useState('');
   const [filterVisitation, setFilterVisitation] = useState<'' | 'yes' | 'no'>('');
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -127,7 +127,7 @@ export default function RegistrationsPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterName, filterInstitution, filterRole, filterCheckin, filterLanguage, filterVisitation, pageSize]);
+  }, [filterName, filterInstitution, filterTravel, filterCheckin, filterVisitation, pageSize]);
 
   const getInstitutionName = (reg: Registration) =>
     reg.institution_name ?? (reg.institution && !Array.isArray(reg.institution) ? reg.institution.name : '');
@@ -141,6 +141,20 @@ export default function RegistrationsPage() {
     return `https://api.whatsapp.com/send?phone=${digits}`;
   };
 
+  const hasFlightData = (reg: Registration) => {
+    const fields = [
+      reg.flight_departure_time,
+      reg.flight_departure_date,
+      reg.flight_departure_airline,
+      reg.flight_departure_number,
+      reg.flight_return_time,
+      reg.flight_return_date,
+      reg.flight_return_airline,
+      reg.flight_return_number,
+    ];
+    return fields.some((value) => typeof value === 'string' && value.trim() !== '');
+  };
+
   useEffect(() => {
     if (!user) return;
     loadRegistrations();
@@ -148,23 +162,21 @@ export default function RegistrationsPage() {
 
   useEffect(() => {
     const nameLower = filterName.trim().toLowerCase();
-    const roleLower = filterRole.trim().toLowerCase();
-    const lang = filterLanguage.trim();
 
     const filtered = registrations.filter((reg) => {
       if (nameLower && !reg.full_name.toLowerCase().includes(nameLower)) return false;
       if (filterInstitution && getInstitutionName(reg) !== filterInstitution) return false;
-      const regRole = (reg.role ?? '').toLowerCase();
-      if (roleLower && regRole !== roleLower) return false;
+      if (filterTravel === 'own' && reg.own_transport !== true) return false;
+      if (filterTravel === 'flight' && (reg.own_transport === true || !hasFlightData(reg))) return false;
+      if (filterTravel === 'no_flight' && (reg.own_transport === true || hasFlightData(reg))) return false;
       if (filterCheckin === 'yes' && !reg.checked_in_at) return false;
       if (filterCheckin === 'no' && !!reg.checked_in_at) return false;
-      if (lang && reg.language !== lang) return false;
       if (filterVisitation === 'yes' && !reg.wants_to_know_novo_tempo) return false;
       if (filterVisitation === 'no' && reg.wants_to_know_novo_tempo === true) return false;
       return true;
     });
     setFilteredRegistrations(filtered);
-  }, [filterName, filterInstitution, filterRole, filterCheckin, filterLanguage, filterVisitation, registrations]);
+  }, [filterName, filterInstitution, filterTravel, filterCheckin, filterVisitation, registrations]);
 
   const loadRegistrations = async () => {
     setLoading(true);
@@ -306,16 +318,9 @@ export default function RegistrationsPage() {
     }
   };
 
-  const uniqueRoles = Array.from(
-    new Set(registrations.map((r) => r.role).filter(Boolean) as string[])
-  ).sort();
   const uniqueInstitutions = Array.from(
     new Set(registrations.map((r) => getInstitutionName(r)).filter(Boolean))
   ).sort();
-  const languages = [
-    { value: 'pt-BR', label: 'Português' },
-    { value: 'es', label: 'Español' },
-  ];
 
   const exportToXLSX = () => {
     const rows = filteredRegistrations.map((reg) => {
@@ -340,6 +345,8 @@ export default function RegistrationsPage() {
         [t.admin.registrations.linkOrHandle]: reg.link_or_handle ?? '',
         [t.admin.registrations.visitation]:
           reg.wants_to_know_novo_tempo === true ? t.common.yes : t.common.no,
+        [t.admin.registrations.ownTransport]:
+          reg.own_transport === true ? t.common.yes : t.common.no,
         [t.admin.registrations.flightDepartureDate]: reg.flight_departure_date ?? '',
         [t.admin.registrations.flightDepartureAirline]: reg.flight_departure_airline ?? '',
         [t.admin.registrations.flightDepartureNumber]: reg.flight_departure_number ?? '',
@@ -390,7 +397,7 @@ export default function RegistrationsPage() {
         <Card>
           <CardHeader>
             <CardTitle>{t.admin.registrations.title}</CardTitle>
-            <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+            <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-gray-700">
                   {t.admin.registrations.fullName}
@@ -427,22 +434,22 @@ export default function RegistrationsPage() {
               )}
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-gray-700">
-                  {t.admin.registrations.role}
+                  {t.admin.registrations.travelFilter}
                 </label>
                 <Select
-                  value={filterRole || '_all'}
-                  onValueChange={(v) => setFilterRole(v === '_all' ? '' : v)}
+                  value={filterTravel || '_all'}
+                  onValueChange={(v) =>
+                    setFilterTravel((v === '_all' ? '' : v) as '' | 'own' | 'flight' | 'no_flight')
+                  }
                 >
                   <SelectTrigger className="h-9">
-                    <SelectValue placeholder={t.admin.registrations.role} />
+                    <SelectValue placeholder={t.admin.registrations.travelFilter} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="_all">—</SelectItem>
-                    {uniqueRoles.map((role) => (
-                      <SelectItem key={role} value={role.toLowerCase()}>
-                        {role}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="own">{t.admin.registrations.travelOwnTransport}</SelectItem>
+                    <SelectItem value="flight">{t.admin.registrations.travelWithFlight}</SelectItem>
+                    <SelectItem value="no_flight">{t.admin.registrations.travelWithoutFlight}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -461,27 +468,6 @@ export default function RegistrationsPage() {
                     <SelectItem value="_all">—</SelectItem>
                     <SelectItem value="yes">{t.common.yes}</SelectItem>
                     <SelectItem value="no">{t.common.no}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-gray-700">
-                  {t.admin.registrations.language}
-                </label>
-                <Select
-                  value={filterLanguage || '_all'}
-                  onValueChange={(v) => setFilterLanguage(v === '_all' ? '' : v)}
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder={t.admin.registrations.language} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_all">—</SelectItem>
-                    {languages.map((lang) => (
-                      <SelectItem key={lang.value} value={lang.value}>
-                        {lang.label}
-                      </SelectItem>
-                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -535,7 +521,6 @@ export default function RegistrationsPage() {
                       <TableHead>{t.admin.registrations.phone}</TableHead>
                       <TableHead>{t.admin.registrations.institution}</TableHead>
                       <TableHead>{t.admin.registrations.voucher}</TableHead>
-                      <TableHead>{t.admin.registrations.visitation}</TableHead>
                       <TableHead>{t.admin.registrations.checkinDateTimeColumn}</TableHead>
                       <TableHead>{t.common.actions}</TableHead>
                     </TableRow>
@@ -564,9 +549,6 @@ export default function RegistrationsPage() {
                         </TableCell>
                         <TableCell>{getInstitutionName(reg)}</TableCell>
                         <TableCell className="font-mono text-xs">{reg.voucher_code}</TableCell>
-                        <TableCell className="text-sm">
-                          {reg.wants_to_know_novo_tempo === true ? t.common.yes : t.common.no}
-                        </TableCell>
                         <TableCell className="text-sm whitespace-nowrap text-muted-foreground">
                           {formatCheckinAt(reg.checked_in_at)}
                         </TableCell>

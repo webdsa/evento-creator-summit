@@ -69,6 +69,7 @@ export async function POST(
         gender: registration.gender,
         shirt_size: registration.shirt_size,
         role: registration.role,
+        link_or_handle: registration.link_or_handle,
         registration_code: registration.registration_code,
         language: registration.language,
       },

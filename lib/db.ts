@@ -73,6 +73,8 @@ export interface Registration {
   conteudo?: string;
   link_or_handle?: string;
   wants_to_know_novo_tempo?: boolean;
+  /** true = chega com transporte próprio (sem dados de voo). */
+  own_transport?: boolean;
   flight_departure_time?: string;
   flight_departure_date?: string;
   flight_departure_airline?: string;
@@ -855,6 +857,7 @@ export async function createRegistration(params: {
   p_conteudo?: string;
   p_link_or_handle?: string;
   p_wants_to_know_novo_tempo: boolean;
+  p_own_transport?: boolean;
   p_flight_departure_time?: string;
   p_flight_departure_date?: string;
   p_flight_departure_airline?: string;
@@ -882,6 +885,7 @@ export async function createRegistration(params: {
     p_conteudo,
     p_link_or_handle,
     p_wants_to_know_novo_tempo,
+    p_own_transport,
     p_flight_departure_time,
     p_flight_departure_date,
     p_flight_departure_airline,
@@ -943,14 +947,15 @@ export async function createRegistration(params: {
     conteudo: p_conteudo || undefined,
     link_or_handle: p_link_or_handle || undefined,
     wants_to_know_novo_tempo: p_wants_to_know_novo_tempo,
-    flight_departure_time: p_flight_departure_time || undefined,
-    flight_departure_date: p_flight_departure_date || undefined,
-    flight_departure_airline: p_flight_departure_airline || undefined,
-    flight_departure_number: p_flight_departure_number || undefined,
-    flight_return_time: p_flight_return_time || undefined,
-    flight_return_date: p_flight_return_date || undefined,
-    flight_return_airline: p_flight_return_airline || undefined,
-    flight_return_number: p_flight_return_number || undefined,
+    own_transport: p_own_transport === true,
+    flight_departure_time: p_own_transport ? undefined : p_flight_departure_time || undefined,
+    flight_departure_date: p_own_transport ? undefined : p_flight_departure_date || undefined,
+    flight_departure_airline: p_own_transport ? undefined : p_flight_departure_airline || undefined,
+    flight_departure_number: p_own_transport ? undefined : p_flight_departure_number || undefined,
+    flight_return_time: p_own_transport ? undefined : p_flight_return_time || undefined,
+    flight_return_date: p_own_transport ? undefined : p_flight_return_date || undefined,
+    flight_return_airline: p_own_transport ? undefined : p_flight_return_airline || undefined,
+    flight_return_number: p_own_transport ? undefined : p_flight_return_number || undefined,
     role: p_role || undefined,
     institution_id: voucher.institution_id,
     institution_name: institution?.name,
@@ -1229,6 +1234,7 @@ export type UpdateRegistrationData = Partial<
     | 'conteudo'
     | 'link_or_handle'
     | 'wants_to_know_novo_tempo'
+    | 'own_transport'
     | 'flight_departure_time'
     | 'flight_departure_date'
     | 'flight_departure_airline'

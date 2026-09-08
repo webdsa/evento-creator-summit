@@ -4,6 +4,7 @@ import { sendConfirmationEmail } from '@/lib/email';
 import { checkRateLimit, getRateLimitIdentifier } from '@/lib/rate-limit';
 import { sendRegistrationWhatsApp, createUnnichatContact } from '@/lib/whatsapp';
 import { validateDocument } from '@/lib/document';
+import { isValidLinkOrHandle, normalizeLinkOrHandle } from '@/lib/utils';
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino'] as const;
 const SHIRT_SIZE_OPTIONS = ['PP', 'P', 'M', 'G', 'GG', 'XG'] as const;
@@ -36,7 +37,9 @@ interface RegistrationRequest {
   documentCountry: string;
   documentType: string;
   documento: string;
+  linkOrHandle?: string;
   wantsToKnowNovoTempo?: boolean;
+  ownTransport?: boolean;
   flightDepartureDate?: string;
   flightReturnDate?: string;
   language: 'pt-BR' | 'es';
@@ -74,7 +77,9 @@ export async function POST(request: NextRequest) {
     documentCountry,
     documentType,
     documento,
+    linkOrHandle,
     wantsToKnowNovoTempo,
+    ownTransport,
     flightDepartureDate,
     flightReturnDate,
     language,
@@ -87,13 +92,15 @@ export async function POST(request: NextRequest) {
   const rawGender = String(gender ?? '').trim();
   const rawShirtSize = String(shirtSize ?? '').trim();
   const rawWantsToKnowNovoTempo = wantsToKnowNovoTempo === true;
-  const parsedFlightDepartureDate = parseOptionalDate(flightDepartureDate);
-  const parsedFlightReturnDate = parseOptionalDate(flightReturnDate);
+  const rawOwnTransport = ownTransport === true;
+  const parsedFlightDepartureDate = rawOwnTransport ? undefined : parseOptionalDate(flightDepartureDate);
+  const parsedFlightReturnDate = rawOwnTransport ? undefined : parseOptionalDate(flightReturnDate);
   const parsedDocument = validateDocument(
     String(documentCountry ?? ''),
     String(documentType ?? ''),
     String(documento ?? '')
   );
+  const rawLinkOrHandle = normalizeLinkOrHandle(String(linkOrHandle ?? ''));
 
   const MAX_VOUCHER_CODE = 64;
   const MAX_FULL_NAME = 200;
@@ -117,6 +124,13 @@ export async function POST(request: NextRequest) {
   if (!parsedDocument.ok) {
     return NextResponse.json(
       { error: 'invalidDocumento' },
+      { status: 400 }
+    );
+  }
+
+  if (!rawLinkOrHandle || !isValidLinkOrHandle(rawLinkOrHandle)) {
+    return NextResponse.json(
+      { error: 'missingFields' },
       { status: 400 }
     );
   }
@@ -182,7 +196,9 @@ export async function POST(request: NextRequest) {
       p_documento: parsedDocument.value,
       p_document_country: parsedDocument.country,
       p_document_type: parsedDocument.type,
+      p_link_or_handle: rawLinkOrHandle,
       p_wants_to_know_novo_tempo: rawWantsToKnowNovoTempo,
+      p_own_transport: rawOwnTransport,
       p_flight_departure_date: parsedFlightDepartureDate,
       p_flight_return_date: parsedFlightReturnDate,
       p_language: language,
@@ -240,6 +256,7 @@ export async function POST(request: NextRequest) {
         gender: registration.gender,
         shirt_size: registration.shirt_size,
         role: registration.role,
+        link_or_handle: registration.link_or_handle,
         registration_code: registration.registration_code,
         language: registration.language,
       },
@@ -295,7 +312,9 @@ export async function POST(request: NextRequest) {
       documento: registration.documento,
       documentType: registration.document_type,
       documentCountry: registration.document_country,
+      linkOrHandle: registration.link_or_handle,
       wantsToKnowNovoTempo: registration.wants_to_know_novo_tempo ?? false,
+      ownTransport: registration.own_transport ?? false,
       flightDepartureDate: registration.flight_departure_date,
       flightReturnDate: registration.flight_return_date,
       institution: institutionName,

@@ -147,6 +147,7 @@ const COUNTRY_PHONE_OPTIONS: {
   },
 ];
 import { useToast } from '@/hooks/use-toast';
+import { isValidLinkOrHandle, normalizeLinkOrHandle } from '@/lib/utils';
 
 interface VoucherValidation {
   valid: boolean;
@@ -178,7 +179,9 @@ interface RegistrationSuccess {
   shirtSize?: string;
   documento?: string;
   documentType?: string;
+  linkOrHandle?: string;
   wantsToKnowNovoTempo?: boolean;
+  ownTransport?: boolean;
   flightDepartureDate?: string;
   flightReturnDate?: string;
   institution: string;
@@ -207,7 +210,9 @@ function InscricaoContent() {
     shirtSize: '',
     documentType: '' as DocumentType | '',
     documento: '',
+    linkOrHandle: '',
     wantsToKnowNovoTempo: false,
+    ownTransport: false,
     flightDepartureDate: '',
     flightReturnDate: '',
   });
@@ -337,6 +342,11 @@ function InscricaoContent() {
     } else if (!SHIRT_SIZE_OPTIONS.includes(formData.shirtSize as (typeof SHIRT_SIZE_OPTIONS)[number])) {
       newErrors.shirtSize = t.errors.requiredField;
     }
+    if (!formData.linkOrHandle.trim()) {
+      newErrors.linkOrHandle = t.errors.requiredField;
+    } else if (!isValidLinkOrHandle(formData.linkOrHandle)) {
+      newErrors.linkOrHandle = t.errors.requiredField;
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -380,9 +390,11 @@ function InscricaoContent() {
           documentCountry: formData.phoneCountry,
           documentType: formData.documentType,
           documento: formData.documento,
+          linkOrHandle: normalizeLinkOrHandle(formData.linkOrHandle),
           wantsToKnowNovoTempo: formData.wantsToKnowNovoTempo,
-          flightDepartureDate: formData.flightDepartureDate || undefined,
-          flightReturnDate: formData.flightReturnDate || undefined,
+          ownTransport: formData.ownTransport,
+          flightDepartureDate: formData.ownTransport ? undefined : formData.flightDepartureDate || undefined,
+          flightReturnDate: formData.ownTransport ? undefined : formData.flightReturnDate || undefined,
           language,
         }),
       });
@@ -412,7 +424,9 @@ function InscricaoContent() {
         shirtSize: data.shirtSize,
         documento: data.documento,
         documentType: data.documentType,
+        linkOrHandle: data.linkOrHandle,
         wantsToKnowNovoTempo: data.wantsToKnowNovoTempo,
+        ownTransport: data.ownTransport,
         flightDepartureDate: data.flightDepartureDate,
         flightReturnDate: data.flightReturnDate,
         institution: data.institution,
@@ -511,7 +525,23 @@ function InscricaoContent() {
                         <dd className="font-semibold text-gray-900">{success.shirtSize}</dd>
                       </div>
                     )}
-                    {success.flightDepartureDate && (
+                    {success.linkOrHandle && (
+                      <div className="border-b border-gray-100 pb-3">
+                        <dt className="text-sm font-medium text-gray-500 mb-1">
+                          {t.publicInscription.linkOrHandle}
+                        </dt>
+                        <dd className="font-semibold text-gray-900">{success.linkOrHandle}</dd>
+                      </div>
+                    )}
+                    {success.ownTransport && (
+                      <div className="border-b border-gray-100 pb-3">
+                        <dt className="text-sm font-medium text-gray-500 mb-1">
+                          {t.publicInscription.ownTransport}
+                        </dt>
+                        <dd className="font-semibold text-gray-900">{t.common.yes}</dd>
+                      </div>
+                    )}
+                    {!success.ownTransport && success.flightDepartureDate && (
                       <div className="border-b border-gray-100 pb-3">
                         <dt className="text-sm font-medium text-gray-500 mb-1">
                           {t.publicInscription.flightDepartureDate}
@@ -519,7 +549,7 @@ function InscricaoContent() {
                         <dd className="font-semibold text-gray-900">{success.flightDepartureDate}</dd>
                       </div>
                     )}
-                    {success.flightReturnDate && (
+                    {!success.ownTransport && success.flightReturnDate && (
                       <div className="border-b border-gray-100 pb-3">
                         <dt className="text-sm font-medium text-gray-500 mb-1">
                           {t.publicInscription.flightReturnDate}
@@ -942,6 +972,58 @@ function InscricaoContent() {
                       )}
                     </div>
 
+                    <div className="space-y-2">
+                      <Label htmlFor="linkOrHandle" className="text-sm sm:text-base font-semibold">
+                        {t.publicInscription.linkOrHandle}
+                      </Label>
+                      <Input
+                        id="linkOrHandle"
+                        name="linkOrHandle"
+                        autoComplete="username"
+                        enterKeyHint="next"
+                        placeholder={t.publicInscription.linkOrHandlePlaceholder}
+                        value={formData.linkOrHandle}
+                        onChange={(e) => {
+                          setFormData({ ...formData, linkOrHandle: e.target.value });
+                          clearFieldError('linkOrHandle');
+                        }}
+                        onBlur={() => {
+                          const normalized = normalizeLinkOrHandle(formData.linkOrHandle);
+                          if (normalized !== formData.linkOrHandle) {
+                            setFormData((prev) => ({ ...prev, linkOrHandle: normalized }));
+                          }
+                        }}
+                        className={`h-12 min-h-[44px] text-base ${errors.linkOrHandle ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                      />
+                      {errors.linkOrHandle && (
+                        <p className="text-sm text-red-600 mt-1 font-medium">{errors.linkOrHandle}</p>
+                      )}
+                    </div>
+
+                    <div className="inscription-checkbox-novo-tempo flex items-center gap-3 py-1">
+                      <Checkbox
+                        id="ownTransport"
+                        checked={formData.ownTransport}
+                        onCheckedChange={(checked) =>
+                          setFormData({
+                            ...formData,
+                            ownTransport: checked === true,
+                            ...(checked === true
+                              ? { flightDepartureDate: '', flightReturnDate: '' }
+                              : {}),
+                          })
+                        }
+                        className="h-5 w-5 shrink-0"
+                      />
+                      <Label
+                        htmlFor="ownTransport"
+                        className="text-sm sm:text-base font-medium cursor-pointer leading-tight text-gray-900"
+                      >
+                        {t.publicInscription.ownTransport}
+                      </Label>
+                    </div>
+
+                    {!formData.ownTransport && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                       <div className="space-y-2">
                         <Label htmlFor="flightDepartureDate" className="text-sm sm:text-base font-semibold">
@@ -974,6 +1056,7 @@ function InscricaoContent() {
                         />
                       </div>
                     </div>
+                    )}
 
                     <div className="inscription-checkbox-novo-tempo flex items-center gap-3 py-1">
                       <Checkbox
