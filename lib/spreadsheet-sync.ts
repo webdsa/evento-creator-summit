@@ -285,7 +285,7 @@ export function matchInstitutionByUniao(
 
 const HEADER_ALIASES: Record<keyof Omit<SpreadsheetRowInput, 'rowNumber'>, string[]> = {
   influencer: ['influencer', 'influenciador'],
-  arroba: ['arroba', 'handle', 'instagram', '@'],
+  arroba: ['arroba', 'link ou', 'link', 'handle', 'instagram'],
   nicho: ['nicho principal', 'nicho', 'conteudo', 'contenido'],
   uniao: ['uniao', 'union', 'instituicao', 'institucion'],
   email: ['email', 'e mail', 'correo'],

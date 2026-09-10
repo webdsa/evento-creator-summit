@@ -16,7 +16,8 @@
     "sync-unichat": "node scripts/sync-unichat-participants.js",
     "sync-unichat:dry": "node scripts/sync-unichat-participants.js --dry-run",
     "backup:firestore": "node scripts/backup-firestore.js",
-    "restore:firestore": "node scripts/restore-firestore.js"
+    "restore:firestore": "node scripts/restore-firestore.js",
+    "compare-spreadsheet": "node scripts/compare-registrations-spreadsheet.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

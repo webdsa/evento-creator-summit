@@ -44,6 +44,25 @@ type SyncResponse = {
   error?: string;
 };
 
+/**
+ * Repete o valor da célula mesclada em todas as linhas do intervalo: no Excel a União
+ * costuma ser agrupada, e sem isso só a primeira linha do grupo teria instituição.
+ */
+function expandMergedCells(sheet: XLSX.WorkSheet) {
+  const merges = sheet['!merges'];
+  if (!Array.isArray(merges)) return;
+  for (const range of merges) {
+    const origin = sheet[XLSX.utils.encode_cell({ r: range.s.r, c: range.s.c })];
+    if (!origin) continue;
+    for (let r = range.s.r; r <= range.e.r; r++) {
+      for (let c = range.s.c; c <= range.e.c; c++) {
+        if (r === range.s.r && c === range.s.c) continue;
+        sheet[XLSX.utils.encode_cell({ r, c })] = { ...origin };
+      }
+    }
+  }
+}
+
 export function SpreadsheetSyncDialog({ getIdToken, labels, onApplied }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -64,6 +83,7 @@ export function SpreadsheetSyncDialog({ getIdToken, labels, onApplied }: Props) 
     const wb = XLSX.read(buffer, { type: 'array' });
     const sheet = wb.Sheets[wb.SheetNames[0]];
     if (!sheet) throw new Error('empty');
+    expandMergedCells(sheet);
     const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' });
     const mapped = json.map((raw, index) => mapSpreadsheetObjectRow(raw, index + 2));
     if (!mapped.some((row) => row.influencer)) {

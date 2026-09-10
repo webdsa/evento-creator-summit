@@ -1082,19 +1082,31 @@ export async function deleteRegistration(p_registration_id: string): Promise<Del
   const reg = { id: regSnap.id, ...regSnap.data() } as Registration;
 
   const t = now();
-  const voucherRef = db().collection(COLL.vouchers).doc(reg.voucher_id);
-  const institutionRef = db().collection(COLL.institutions).doc(reg.institution_id);
-  const emailIndexRef = db().collection(COLL.emailIndex).doc(reg.email_normalized);
+  // Registros importados de planilha podem não ter voucher, instituição ou e-mail.
+  const voucherId = reg.voucher_id?.trim();
+  const institutionId = reg.institution_id?.trim();
+  const emailNormalized = (reg.email_normalized ?? reg.email ?? '').trim().toLowerCase();
+  const voucherRef = voucherId ? db().collection(COLL.vouchers).doc(voucherId) : null;
+  const institutionRef = institutionId ? db().collection(COLL.institutions).doc(institutionId) : null;
+  const emailIndexRef = emailNormalized ? db().collection(COLL.emailIndex).doc(emailNormalized) : null;
+  const decrement = reg.status === 'confirmed' ? 1 : 0;
 
   await db().runTransaction(async (tx) => {
-    const vSnap = await tx.get(voucherRef);
-    const iSnap = await tx.get(institutionRef);
-    const vUsed = (vSnap.data()?.used_count ?? 0) - (reg.status === 'confirmed' ? 1 : 0);
-    const iUsed = (iSnap.data()?.used_count ?? 0) - (reg.status === 'confirmed' ? 1 : 0);
+    const vSnap = voucherRef ? await tx.get(voucherRef) : null;
+    const iSnap = institutionRef ? await tx.get(institutionRef) : null;
+    const eSnap = emailIndexRef ? await tx.get(emailIndexRef) : null;
     tx.delete(regRef);
-    tx.delete(emailIndexRef);
-    tx.update(voucherRef, { used_count: Math.max(0, vUsed), updated_at: t });
-    tx.update(institutionRef, { used_count: Math.max(0, iUsed), updated_at: t });
+    if (emailIndexRef && eSnap?.exists && eSnap.data()?.registrationId === reg.id) {
+      tx.delete(emailIndexRef);
+    }
+    if (voucherRef && vSnap?.exists) {
+      const vUsed = (vSnap.data()?.used_count ?? 0) - decrement;
+      tx.update(voucherRef, { used_count: Math.max(0, vUsed), updated_at: t });
+    }
+    if (institutionRef && iSnap?.exists) {
+      const iUsed = (iSnap.data()?.used_count ?? 0) - decrement;
+      tx.update(institutionRef, { used_count: Math.max(0, iUsed), updated_at: t });
+    }
   });
 
   return { success: true };
