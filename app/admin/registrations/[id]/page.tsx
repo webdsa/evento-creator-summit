@@ -45,6 +45,7 @@ interface RegistrationData {
   gender?: string;
   shirt_size?: string;
   campo?: string;
+  cracha?: string;
   plataforma?: string;
   seguidores?: number;
   documento?: string;
@@ -92,6 +93,7 @@ export default function EditRegistrationPage() {
     gender: '',
     shirt_size: '',
     campo: '',
+    cracha: '',
     plataforma: '',
     seguidores: '',
     documento: '',
@@ -135,6 +137,7 @@ export default function EditRegistrationPage() {
           gender: data.gender ?? '',
           shirt_size: data.shirt_size ?? '',
           campo: data.campo ?? '',
+          cracha: data.cracha ?? '',
           plataforma: data.plataforma ?? '',
           seguidores: data.seguidores !== undefined && data.seguidores !== null ? String(data.seguidores) : '',
           documento: data.documento ?? '',
@@ -192,6 +195,7 @@ export default function EditRegistrationPage() {
           gender: formData.gender || undefined,
           shirt_size: formData.shirt_size || undefined,
           campo: formData.campo.trim() || undefined,
+          cracha: formData.cracha.trim(),
           plataforma: formData.plataforma.trim() || undefined,
           seguidores: formData.seguidores.trim() !== '' ? Number(formData.seguidores.replace(/\D/g, '')) : undefined,
           documento: formData.documento.trim() || undefined,
@@ -231,6 +235,7 @@ export default function EditRegistrationPage() {
         gender: updated.gender ?? '',
         shirt_size: updated.shirt_size ?? '',
         campo: updated.campo ?? '',
+        cracha: updated.cracha ?? '',
         plataforma: updated.plataforma ?? '',
         seguidores: updated.seguidores !== undefined && updated.seguidores !== null ? String(updated.seguidores) : '',
         documento: updated.documento ?? '',
@@ -433,6 +438,17 @@ export default function EditRegistrationPage() {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="cracha">{t.admin.registrations.cracha}</Label>
+                <Input
+                  id="cracha"
+                  value={formData.cracha}
+                  onChange={(e) => setFormData({ ...formData, cracha: e.target.value })}
+                  placeholder={t.publicInscription.crachaPlaceholder}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <Label>{t.admin.registrations.documentCountry}</Label>
                 <Select
                   value={formData.document_country || '__none__'}
@@ -464,8 +480,6 @@ export default function EditRegistrationPage() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t.admin.registrations.documentType}</Label>
                 <Select

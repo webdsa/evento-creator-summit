@@ -14,7 +14,9 @@
     "create-admin": "node scripts/create-admin.js",
     "test:whatsapp": "node scripts/test-whatsapp.js",
     "sync-unichat": "node scripts/sync-unichat-participants.js",
-    "sync-unichat:dry": "node scripts/sync-unichat-participants.js --dry-run"
+    "sync-unichat:dry": "node scripts/sync-unichat-participants.js --dry-run",
+    "backup:firestore": "node scripts/backup-firestore.js",
+    "restore:firestore": "node scripts/restore-firestore.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

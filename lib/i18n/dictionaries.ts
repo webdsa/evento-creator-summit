@@ -87,6 +87,8 @@ export interface Dictionary {
     shirtSizePlaceholder: string;
     campo: string;
     campoPlaceholder: string;
+    cracha: string;
+    crachaPlaceholder: string;
     plataforma: string;
     plataformaPlaceholder: string;
     seguidores: string;
@@ -472,6 +474,7 @@ export interface Dictionary {
       gender: string;
       shirtSize: string;
       campo: string;
+      cracha: string;
       plataforma: string;
       seguidores: string;
       documento: string;
@@ -512,6 +515,18 @@ export interface Dictionary {
       emailAlreadySent: string;
       exportCSV: string;
       exportXLSX: string;
+      syncSpreadsheet: string;
+      syncSpreadsheetTitle: string;
+      syncSpreadsheetHint: string;
+      syncSpreadsheetPreview: string;
+      syncSpreadsheetApply: string;
+      syncSpreadsheetApplied: string;
+      syncSpreadsheetMatched: string;
+      syncSpreadsheetCreate: string;
+      syncSpreadsheetAmbiguous: string;
+      syncSpreadsheetSkip: string;
+      syncSpreadsheetMissingColumns: string;
+      syncSpreadsheetInstitutionMissing: string;
       includeCanceled: string;
       onlyConfirmed: string;
       deleteRegistration: string;
@@ -637,6 +652,8 @@ export const dictionaries: Record<Language, Dictionary> = {
       shirtSizePlaceholder: 'Selecione',
       campo: 'Campo',
       campoPlaceholder: 'Digite o campo',
+      cracha: 'Cracha',
+      crachaPlaceholder: 'Digite o cracha',
       plataforma: 'Plataforma',
       plataformaPlaceholder: 'Ex: Instagram, YouTube, TikTok',
       seguidores: 'Seguidores',
@@ -1037,6 +1054,7 @@ export const dictionaries: Record<Language, Dictionary> = {
       gender: 'Gênero',
       shirtSize: 'Camiseta',
       campo: 'Campo',
+      cracha: 'Cracha',
       plataforma: 'Plataforma',
       seguidores: 'Seguidores',
       documento: 'Documento',
@@ -1077,6 +1095,19 @@ export const dictionaries: Record<Language, Dictionary> = {
         emailAlreadySent: 'E-mail já foi enviado anteriormente',
         exportCSV: 'Exportar CSV',
         exportXLSX: 'Exportar XLSX',
+        syncSpreadsheet: 'Sincronizar planilha',
+        syncSpreadsheetTitle: 'Sincronizar inscritos com a planilha',
+        syncSpreadsheetHint:
+          'Cruza o campo Influencer com o nome no sistema. Atualiza crachá, arroba, conteúdo (nicho principal) e instituição (coluna União). Quem não for identificado vira um novo registro.',
+        syncSpreadsheetPreview: 'Revise o resultado antes de gravar. Linhas ambíguas não são alteradas.',
+        syncSpreadsheetApply: 'Aplicar sincronização',
+        syncSpreadsheetApplied: 'Planilha sincronizada com sucesso',
+        syncSpreadsheetMatched: 'Atualizar',
+        syncSpreadsheetCreate: 'Criar',
+        syncSpreadsheetAmbiguous: 'Ambíguo',
+        syncSpreadsheetSkip: 'Ignorar',
+        syncSpreadsheetMissingColumns: 'Não encontrei a coluna Influencer na planilha.',
+        syncSpreadsheetInstitutionMissing: 'União sem instituição correspondente',
         includeCanceled: 'Incluir canceladas',
         onlyConfirmed: 'Apenas confirmadas',
         deleteRegistration: 'Excluir inscrição',
@@ -1201,6 +1232,8 @@ export const dictionaries: Record<Language, Dictionary> = {
       shirtSizePlaceholder: 'Seleccione',
       campo: 'Campo',
       campoPlaceholder: 'Ingrese el campo',
+      cracha: 'Cracha',
+      crachaPlaceholder: 'Ingrese el cracha',
       plataforma: 'Plataforma',
       plataformaPlaceholder: 'Ej: Instagram, YouTube, TikTok',
       seguidores: 'Seguidores',
@@ -1601,6 +1634,7 @@ export const dictionaries: Record<Language, Dictionary> = {
         gender: 'Género',
         shirtSize: 'Camiseta',
         campo: 'Campo',
+        cracha: 'Cracha',
         plataforma: 'Plataforma',
         seguidores: 'Seguidores',
         documento: 'Documento',
@@ -1641,6 +1675,19 @@ export const dictionaries: Record<Language, Dictionary> = {
         emailAlreadySent: 'El correo ya fue enviado anteriormente',
         exportCSV: 'Exportar CSV',
         exportXLSX: 'Exportar XLSX',
+        syncSpreadsheet: 'Sincronizar planilla',
+        syncSpreadsheetTitle: 'Sincronizar inscritos con la planilla',
+        syncSpreadsheetHint:
+          'Cruza el campo Influencer con el nombre en el sistema. Actualiza credencial, arroba, contenido (nicho principal) e institución (columna Unión). Quien no sea identificado se crea como un nuevo registro.',
+        syncSpreadsheetPreview: 'Revise el resultado antes de guardar. Las filas ambiguas no se modifican.',
+        syncSpreadsheetApply: 'Aplicar sincronización',
+        syncSpreadsheetApplied: 'Planilla sincronizada con éxito',
+        syncSpreadsheetMatched: 'Actualizar',
+        syncSpreadsheetCreate: 'Crear',
+        syncSpreadsheetAmbiguous: 'Ambiguo',
+        syncSpreadsheetSkip: 'Ignorar',
+        syncSpreadsheetMissingColumns: 'No encontré la columna Influencer en la planilla.',
+        syncSpreadsheetInstitutionMissing: 'Unión sin institución correspondiente',
         includeCanceled: 'Incluir canceladas',
         onlyConfirmed: 'Solo confirmadas',
         deleteRegistration: 'Eliminar inscripción',

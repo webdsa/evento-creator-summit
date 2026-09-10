@@ -19,6 +19,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useMemo } from 'react';
 import { Loader2, Download, Mail, MessageCircle, XCircle, Trash2, RotateCcw, PencilLine, ArrowUp, ArrowDown } from 'lucide-react';
+import { SpreadsheetSyncDialog } from '@/components/admin/SpreadsheetSyncDialog';
 import Link from 'next/link';
 import {
   Select,
@@ -53,6 +54,7 @@ interface Registration {
   gender?: string;
   shirt_size?: string;
   campo?: string;
+  cracha?: string;
   plataforma?: string;
   seguidores?: number;
   documento?: string;
@@ -339,6 +341,7 @@ export default function RegistrationsPage() {
       return {
         [t.admin.registrations.registrationCode]: reg.registration_code,
         [t.admin.registrations.fullName]: reg.full_name,
+        [t.admin.registrations.cracha]: reg.cracha ?? '',
         [t.admin.registrations.email]: reg.email,
         'E-mail normalizado': reg.email_normalized ?? '',
         [t.admin.registrations.phone]: reg.phone ?? '',
@@ -395,12 +398,37 @@ export default function RegistrationsPage() {
   return (
     <AdminProtected>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center gap-2 flex-wrap">
           <h1 className="text-3xl font-bold">{t.admin.registrations.title}</h1>
-          <Button onClick={exportToXLSX} className="gap-2">
-            <Download className="h-4 w-4" />
-            {t.admin.registrations.exportXLSX}
-          </Button>
+          <div className="flex gap-2">
+            {!isSecretaria && (
+              <SpreadsheetSyncDialog
+                getIdToken={getIdToken}
+                onApplied={loadRegistrations}
+                labels={{
+                  button: t.admin.registrations.syncSpreadsheet,
+                  title: t.admin.registrations.syncSpreadsheetTitle,
+                  hint: t.admin.registrations.syncSpreadsheetHint,
+                  preview: t.admin.registrations.syncSpreadsheetPreview,
+                  apply: t.admin.registrations.syncSpreadsheetApply,
+                  applied: t.admin.registrations.syncSpreadsheetApplied,
+                  matched: t.admin.registrations.syncSpreadsheetMatched,
+                  create: t.admin.registrations.syncSpreadsheetCreate,
+                  ambiguous: t.admin.registrations.syncSpreadsheetAmbiguous,
+                  skip: t.admin.registrations.syncSpreadsheetSkip,
+                  cancel: t.common.cancel,
+                  error: t.errors.genericError,
+                  missingColumns: t.admin.registrations.syncSpreadsheetMissingColumns,
+                  institution: t.admin.registrations.institution,
+                  institutionMissing: t.admin.registrations.syncSpreadsheetInstitutionMissing,
+                }}
+              />
+            )}
+            <Button onClick={exportToXLSX} className="gap-2">
+              <Download className="h-4 w-4" />
+              {t.admin.registrations.exportXLSX}
+            </Button>
+          </div>
         </div>
 
         <Card>

@@ -65,6 +65,7 @@ export interface Registration {
   gender?: string;
   shirt_size?: string;
   campo?: string;
+  cracha?: string;
   plataforma?: string;
   seguidores?: number;
   documento?: string;
@@ -849,6 +850,7 @@ export async function createRegistration(params: {
   p_gender: string;
   p_shirt_size: string;
   p_campo?: string;
+  p_cracha?: string;
   p_plataforma?: string;
   p_seguidores?: number;
   p_documento: string;
@@ -877,6 +879,7 @@ export async function createRegistration(params: {
     p_gender,
     p_shirt_size,
     p_campo,
+    p_cracha,
     p_plataforma,
     p_seguidores,
     p_documento,
@@ -939,6 +942,7 @@ export async function createRegistration(params: {
     gender: p_gender || undefined,
     shirt_size: p_shirt_size || undefined,
     campo: p_campo || undefined,
+    cracha: p_cracha || undefined,
     plataforma: p_plataforma || undefined,
     seguidores: p_seguidores !== undefined && Number.isFinite(p_seguidores) ? p_seguidores : undefined,
     documento: p_documento || undefined,
@@ -1216,6 +1220,13 @@ export async function setRegistrationCheckedIn(registrationId: string): Promise<
   return new Date(ms).toISOString();
 }
 
+const DELETABLE_REGISTRATION_FIELDS = new Set([
+  'link_or_handle',
+  'conteudo',
+  'cracha',
+  'campo',
+]);
+
 export type UpdateRegistrationData = Partial<
   Pick<
     Registration,
@@ -1226,6 +1237,7 @@ export type UpdateRegistrationData = Partial<
     | 'gender'
     | 'shirt_size'
     | 'campo'
+    | 'cracha'
     | 'plataforma'
     | 'seguidores'
     | 'documento'
@@ -1257,7 +1269,173 @@ export async function updateRegistration(
   id: string,
   data: UpdateRegistrationData
 ): Promise<void> {
-  await db().collection(COLL.registrations).doc(id).update(data);
+  const payload: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value === undefined) continue;
+    if ((value === null || value === '') && DELETABLE_REGISTRATION_FIELDS.has(key)) {
+      payload[key] = admin.firestore.FieldValue.delete();
+      continue;
+    }
+    payload[key] = value;
+  }
+  if (Object.keys(payload).length === 0) return;
+  await db().collection(COLL.registrations).doc(id).update(payload);
+}
+
+export async function createImportedRegistration(data: {
+  full_name: string;
+  cracha?: string;
+  link_or_handle?: string | null;
+  conteudo?: string;
+  email?: string;
+  phone?: string;
+  institution_id?: string;
+  institution_name?: string;
+  voucher_id?: string;
+  voucher_code?: string;
+}): Promise<
+  | { success: true; registration_id: string; registration_code: string }
+  | { success: false; error: string }
+> {
+  const email = data.email?.trim() ?? '';
+  const emailNormalized = email.toLowerCase();
+  if (emailNormalized) {
+    const existing = await db().collection(COLL.emailIndex).doc(emailNormalized).get();
+    if (existing.exists) return { success: false, error: 'EMAIL_ALREADY_REGISTERED' };
+  }
+  const registrationCode = await getUniqueRegistrationCode();
+  const t = now();
+  const regRef = db().collection(COLL.registrations).doc();
+  const registration: Record<string, unknown> = {
+    registration_code: registrationCode,
+    full_name: data.full_name,
+    email,
+    email_normalized: emailNormalized,
+    phone: data.phone?.trim() ?? '',
+    cracha: data.cracha || undefined,
+    conteudo: data.conteudo || undefined,
+    link_or_handle: data.link_or_handle || undefined,
+    wants_to_know_novo_tempo: false,
+    own_transport: false,
+    institution_id: data.institution_id || '',
+    institution_name: data.institution_name || undefined,
+    voucher_id: data.voucher_id || '',
+    voucher_code: data.voucher_code || 'PLANILHA',
+    language: 'pt-BR',
+    status: 'confirmed',
+    created_at: t,
+    canceled_at: null,
+    canceled_by: null,
+    confirmation_email_sent_at: null,
+    confirmation_email_last_error: null,
+  };
+  const registrationDoc = Object.fromEntries(
+    Object.entries(registration).filter(([, value]) => value !== undefined && value !== null)
+  );
+
+  await db().runTransaction(async (tx) => {
+    tx.set(regRef, registrationDoc);
+    if (emailNormalized) {
+      const emailIndexRef = db().collection(COLL.emailIndex).doc(emailNormalized);
+      tx.set(emailIndexRef, { registrationId: regRef.id, created_at: t });
+    }
+    if (data.voucher_id) {
+      const voucherRef = db().collection(COLL.vouchers).doc(data.voucher_id);
+      tx.update(voucherRef, {
+        used_count: admin.firestore.FieldValue.increment(1),
+        updated_at: t,
+      });
+    }
+    if (data.institution_id) {
+      const institutionRef = db().collection(COLL.institutions).doc(data.institution_id);
+      tx.update(institutionRef, {
+        used_count: admin.firestore.FieldValue.increment(1),
+        updated_at: t,
+      });
+    }
+  });
+
+  return {
+    success: true,
+    registration_id: regRef.id,
+    registration_code: registrationCode,
+  };
+}
+
+export async function reassignRegistrationInstitution(
+  registrationId: string,
+  institution: { id: string; name: string },
+  voucher?: { id: string; code: string } | null
+): Promise<void> {
+  const regRef = db().collection(COLL.registrations).doc(registrationId);
+  const t = now();
+
+  await db().runTransaction(async (tx) => {
+    const snap = await tx.get(regRef);
+    if (!snap.exists) return;
+    const reg = snap.data() as Registration;
+    const oldInstitutionId = typeof reg.institution_id === 'string' ? reg.institution_id.trim() : '';
+    const oldVoucherId = typeof reg.voucher_id === 'string' ? reg.voucher_id.trim() : '';
+    const confirmed = reg.status === 'confirmed';
+    const institutionChanged = oldInstitutionId !== institution.id;
+
+    const oldVoucherRef = oldVoucherId ? db().collection(COLL.vouchers).doc(oldVoucherId) : null;
+    const oldVoucherSnap = oldVoucherRef ? await tx.get(oldVoucherRef) : null;
+    const keepCurrentVoucher = oldVoucherSnap?.data()?.institution_id === institution.id;
+    const nextVoucher = keepCurrentVoucher ? null : voucher ?? null;
+    const voucherChanged = Boolean(nextVoucher?.id && nextVoucher.id !== oldVoucherId);
+
+    const oldInstRef =
+      confirmed && institutionChanged && oldInstitutionId
+        ? db().collection(COLL.institutions).doc(oldInstitutionId)
+        : null;
+    const newInstRef =
+      confirmed && institutionChanged ? db().collection(COLL.institutions).doc(institution.id) : null;
+    const newVoucherRef =
+      confirmed && voucherChanged && nextVoucher?.id
+        ? db().collection(COLL.vouchers).doc(nextVoucher.id)
+        : null;
+
+    const oldInstSnap = oldInstRef ? await tx.get(oldInstRef) : null;
+    const newInstSnap = newInstRef ? await tx.get(newInstRef) : null;
+    const newVoucherSnap = newVoucherRef ? await tx.get(newVoucherRef) : null;
+
+    const updates: Record<string, unknown> = {
+      institution_id: institution.id,
+      institution_name: institution.name,
+    };
+    if (nextVoucher?.id) {
+      updates.voucher_id = nextVoucher.id;
+      updates.voucher_code = nextVoucher.code;
+    }
+
+    if (oldInstRef && oldInstSnap?.exists) {
+      tx.update(oldInstRef, {
+        used_count: Math.max(0, Number(oldInstSnap.data()?.used_count ?? 0) - 1),
+        updated_at: t,
+      });
+    }
+    if (newInstRef && newInstSnap?.exists) {
+      tx.update(newInstRef, {
+        used_count: Number(newInstSnap.data()?.used_count ?? 0) + 1,
+        updated_at: t,
+      });
+    }
+    if (confirmed && voucherChanged && oldVoucherRef && oldVoucherSnap?.exists) {
+      tx.update(oldVoucherRef, {
+        used_count: Math.max(0, Number(oldVoucherSnap.data()?.used_count ?? 0) - 1),
+        updated_at: t,
+      });
+    }
+    if (newVoucherRef && newVoucherSnap?.exists) {
+      tx.update(newVoucherRef, {
+        used_count: Number(newVoucherSnap.data()?.used_count ?? 0) + 1,
+        updated_at: t,
+      });
+    }
+
+    tx.update(regRef, updates);
+  });
 }
 
 // --- Admins ---

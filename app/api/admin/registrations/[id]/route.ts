@@ -65,6 +65,7 @@ export async function PATCH(
     const gender = typeof body.gender === 'string' ? body.gender.trim() || undefined : undefined;
     const shirtSize = typeof body.shirt_size === 'string' ? body.shirt_size.trim() || undefined : undefined;
     const campo = typeof body.campo === 'string' ? body.campo.trim() || undefined : undefined;
+    const cracha = typeof body.cracha === 'string' ? body.cracha.trim() : undefined;
     const plataforma = typeof body.plataforma === 'string' ? body.plataforma.trim() || undefined : undefined;
     const documento = typeof body.documento === 'string' ? body.documento.trim() || undefined : undefined;
     const documentCountry =
@@ -114,6 +115,7 @@ export async function PATCH(
     if (gender !== undefined) updates.gender = gender;
     if (shirtSize !== undefined) updates.shirt_size = shirtSize;
     if (campo !== undefined) updates.campo = campo;
+    if (cracha !== undefined) updates.cracha = cracha;
     if (plataforma !== undefined) updates.plataforma = plataforma;
     if (seguidores !== undefined && Number.isInteger(seguidores)) updates.seguidores = seguidores;
     const currentCountry = registration.document_country ?? '';

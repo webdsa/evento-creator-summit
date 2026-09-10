@@ -26,6 +26,9 @@ yarn-error.log*
 
 # local env files
 .env*
+
+# firestore dumps (PII)
+/backups/
 # vercel
 .vercel
 
