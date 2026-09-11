@@ -6,7 +6,7 @@ Sistema completo de gestão de inscrições para o evento Creators Summit 2026, 
 
 ### Público
 - Inscrição via link com voucher (`/inscricao?code=VOUCHER`)
-- Validação em tempo real de vagas disponíveis
+- Validação em tempo real de vaga disponível
 - Multi-idioma (PT-BR/ES) com detecção automática
 - Dedupe por e-mail (um e-mail = uma inscrição)
 - E-mail de confirmação no idioma do inscrito
