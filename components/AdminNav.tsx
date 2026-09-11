@@ -6,7 +6,7 @@ import { useLanguage } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthProvider';
 import { LanguageSelector } from './LanguageSelector';
 import { Button } from './ui/button';
-import { LayoutDashboard, Building2, Presentation, Ticket, Users, Mic, Wrench, Settings, LogOut, QrCode, UserPlus } from 'lucide-react';
+import { LayoutDashboard, Building2, Presentation, Ticket, Users, Mic, Wrench, Settings, LogOut, QrCode, UserPlus, Plane, Search } from 'lucide-react';
 
 export function AdminNav() {
   const pathname = usePathname();
@@ -22,6 +22,8 @@ export function AdminNav() {
     { href: '/admin/institutions', label: t.admin.nav.institutions, icon: Building2 },
     { href: '/admin/vouchers', label: t.admin.nav.vouchers, icon: Ticket },
     { href: '/admin/registrations', label: t.admin.nav.registrations, icon: Users },
+    { href: '/admin/voos', label: t.admin.nav.flights, icon: Plane },
+    { href: '/admin/consulta-voo', label: t.admin.nav.flightLookup, icon: Search },
     { href: '/admin/checkin', label: t.admin.nav.checkin, icon: QrCode },
     { href: '/admin/users', label: t.admin.nav.users, icon: UserPlus },
   ];
@@ -35,7 +37,11 @@ export function AdminNav() {
   const navItemsLeft = isCheckinOnly
     ? [{ href: '/admin/checkin', label: t.admin.nav.checkin, icon: QrCode }]
     : isSecretaria
-      ? [{ href: '/admin/registrations', label: t.admin.nav.registrations, icon: Users }]
+      ? [
+          { href: '/admin/registrations', label: t.admin.nav.registrations, icon: Users },
+          { href: '/admin/voos', label: t.admin.nav.flights, icon: Plane },
+          { href: '/admin/consulta-voo', label: t.admin.nav.flightLookup, icon: Search },
+        ]
       : navItemsLeftFull;
 
   const navItemsRight = isCheckinOnly || isSecretaria ? [] : navItemsRightFull;

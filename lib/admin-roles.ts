@@ -20,6 +20,10 @@ export function isSecretariaPathAllowed(pathname: string): boolean {
   return (
     pathname === '/admin/settings' ||
     pathname === '/admin/registrations' ||
-    pathname.startsWith('/admin/registrations/')
+    pathname.startsWith('/admin/registrations/') ||
+    pathname === '/admin/voos' ||
+    pathname.startsWith('/admin/voos/') ||
+    pathname === '/admin/consulta-voo' ||
+    pathname.startsWith('/admin/consulta-voo/')
   );
 }

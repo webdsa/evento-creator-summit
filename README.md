@@ -28,6 +28,7 @@ O projeto usa **Firebase** (Firestore + Auth). Copie `.env.example` para `.env` 
 
 - **NEXT_PUBLIC_FIREBASE_***: no Firebase Console → Configurações do projeto → Seus apps
 - **FIREBASE_CLIENT_EMAIL** e **FIREBASE_PRIVATE_KEY**: criar uma conta de serviço em Firebase Console → Configurações do projeto → Contas de serviço → Gerar nova chave privada
+- **AERODATABOX_API_KEY**: chave da [AeroDataBox](https://aerodatabox.com/pricing). UUID = portal direto (`api.aerodatabox.com`). Opcional: `AERODATABOX_CHANNEL=direct|rapidapi|apimarket`
 
 Veja o passo a passo em `FIREBASE_SETUP.md`.
 

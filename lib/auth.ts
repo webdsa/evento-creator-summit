@@ -1,11 +1,19 @@
 import { getAdminAuth } from './firebase-admin';
-import { isAdminUser, canDoCheckin, getAdmin } from './db';
+import { getAdmin, type AdminProfile } from './db';
 import type { AdminRole } from './admin-roles';
+import { FirestoreQuotaError, isFirestoreQuotaError } from './firestore-errors';
+import { adminProfileFromDecodedToken } from './staff-claims';
 
 export type StaffAccess = {
   uid: string;
   role: AdminRole;
   institutionId: string | null;
+};
+
+export type CurrentUser = {
+  uid: string;
+  email?: string;
+  staff: AdminProfile | null;
 };
 
 /**
@@ -14,23 +22,39 @@ export type StaffAccess = {
  */
 export async function getCurrentUser(
   authorizationHeader: string | null
-): Promise<{ uid: string; email?: string } | null> {
+): Promise<CurrentUser | null> {
   const token =
     authorizationHeader?.startsWith('Bearer ') ? authorizationHeader.slice(7) : null;
   if (!token) return null;
 
   try {
     const decoded = await getAdminAuth().verifyIdToken(token);
-    return { uid: decoded.uid, email: decoded.email };
+    return {
+      uid: decoded.uid,
+      email: decoded.email,
+      staff: adminProfileFromDecodedToken(decoded),
+    };
   } catch {
     return null;
+  }
+}
+
+export async function resolveAdminProfile(user: CurrentUser): Promise<AdminProfile | null> {
+  if (user.staff?.enabled) return user.staff;
+  try {
+    return await getAdmin(user.uid);
+  } catch (error) {
+    if (user.staff) return user.staff;
+    if (isFirestoreQuotaError(error)) throw new FirestoreQuotaError();
+    throw error;
   }
 }
 
 export async function isAdmin(authorizationHeader: string | null): Promise<boolean> {
   const user = await getCurrentUser(authorizationHeader);
   if (!user) return false;
-  return isAdminUser(user.uid);
+  const admin = await resolveAdminProfile(user);
+  return admin?.enabled === true && (admin.role ?? 'admin') === 'admin';
 }
 
 /** Exige usuário autenticado com role admin (acesso total ao painel). */
@@ -39,8 +63,8 @@ export async function requireAdmin(authorizationHeader: string | null): Promise<
   if (!user) {
     throw new Error('Unauthorized');
   }
-  const ok = await isAdminUser(user.uid);
-  if (!ok) {
+  const admin = await resolveAdminProfile(user);
+  if (!admin?.enabled || (admin.role ?? 'admin') !== 'admin') {
     throw new Error('Unauthorized');
   }
   return { uid: user.uid };
@@ -54,7 +78,7 @@ export async function requireEnabledStaff(
   if (!user) {
     throw new Error('Unauthorized');
   }
-  const admin = await getAdmin(user.uid);
+  const admin = await resolveAdminProfile(user);
   if (!admin?.enabled) {
     throw new Error('Unauthorized');
   }
@@ -69,8 +93,12 @@ export async function requireCheckinOrAdmin(
   if (!user) {
     throw new Error('Unauthorized');
   }
-  const ok = await canDoCheckin(user.uid);
-  if (!ok) {
+  const admin = await resolveAdminProfile(user);
+  if (!admin?.enabled) {
+    throw new Error('Unauthorized');
+  }
+  const role = admin.role ?? 'admin';
+  if (role !== 'admin' && role !== 'checkin') {
     throw new Error('Unauthorized');
   }
   return { uid: user.uid };
@@ -84,7 +112,7 @@ export async function requireRegistrationsAccess(
   if (!user) {
     throw new Error('Unauthorized');
   }
-  const admin = await getAdmin(user.uid);
+  const admin = await resolveAdminProfile(user);
   if (!admin?.enabled) {
     throw new Error('Unauthorized');
   }

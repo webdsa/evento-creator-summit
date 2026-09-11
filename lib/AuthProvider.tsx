@@ -25,6 +25,7 @@ interface AuthContextType {
   role: AdminRole | null;
   /** Instituição vinculada (perfil secretaria). */
   institutionId: string | null;
+  quotaExceeded: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   getIdToken: () => Promise<string | null>;
@@ -45,6 +46,7 @@ async function fetchAdminMe(
   token: string
 ): Promise<{
   ok: boolean;
+  quotaExceeded?: boolean;
   mustChangePassword?: boolean;
   role?: AdminRole;
   institution_id?: string | null;
@@ -52,6 +54,7 @@ async function fetchAdminMe(
   const res = await fetch('/api/admin/me', {
     headers: { Authorization: `Bearer ${token}` },
   });
+  if (res.status === 503) return { ok: false, quotaExceeded: true };
   if (!res.ok) return { ok: false };
   return res.json();
 }
@@ -62,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [mustChangePassword, setMustChangePassword] = useState<boolean | null>(null);
   const [role, setRole] = useState<AdminRole | null>(null);
   const [institutionId, setInstitutionId] = useState<string | null>(null);
+  const [quotaExceeded, setQuotaExceeded] = useState(false);
   const router = useRouter();
 
   const refreshAdminStatus = async () => {
@@ -69,6 +73,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const token = await user.getIdToken();
       const data = await fetchAdminMe(token);
+      if (data.quotaExceeded) {
+        return null;
+      }
       if (!data.ok) {
         setMustChangePassword(false);
         setRole(null);
@@ -105,27 +112,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    user.getIdToken().then((token) => {
-      if (cancelled) return;
-      return fetchAdminMe(token);
-    }).then((data) => {
-      if (cancelled || !data) return;
-      if (!data.ok) {
-        setMustChangePassword(false);
-        setRole(null);
-        setInstitutionId(null);
-        return;
+    let quotaRetries = 0;
+    const load = async (forceRefresh = false) => {
+      try {
+        const token = await user.getIdToken(forceRefresh);
+        if (cancelled) return;
+        const data = await fetchAdminMe(token);
+        if (cancelled || !data) return;
+        if (data.quotaExceeded) {
+          setQuotaExceeded(true);
+          if (quotaRetries < 2) {
+            quotaRetries += 1;
+            window.setTimeout(() => {
+              if (!cancelled) void load(true);
+            }, 4000);
+          }
+          return;
+        }
+        setQuotaExceeded(false);
+        if (!data.ok) {
+          setMustChangePassword(false);
+          setRole(null);
+          setInstitutionId(null);
+          return;
+        }
+        setMustChangePassword(data.mustChangePassword ?? false);
+        setRole(data.role ?? 'admin');
+        setInstitutionId(data.institution_id ?? null);
+        if (!forceRefresh) {
+          void user.getIdToken(true);
+        }
+      } catch {
+        if (!cancelled) {
+          setMustChangePassword(false);
+          setRole(null);
+          setInstitutionId(null);
+        }
       }
-      setMustChangePassword(data.mustChangePassword ?? false);
-      setRole(data.role ?? 'admin');
-      setInstitutionId(data.institution_id ?? null);
-    }).catch(() => {
-      if (!cancelled) {
-        setMustChangePassword(false);
-        setRole(null);
-        setInstitutionId(null);
-      }
-    });
+    };
+    void load();
     return () => {
       cancelled = true;
     };
@@ -139,6 +164,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch('/api/admin/me', {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (res.status === 503) {
+        setQuotaExceeded(true);
+        return { error: 'quota_exceeded' };
+      }
       if (!res.ok) {
         await firebaseSignOut(auth);
         return { error: 'Unauthorized' };
@@ -192,6 +221,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     mustChangePassword,
     role,
     institutionId,
+    quotaExceeded,
     signIn,
     signOut,
     getIdToken,

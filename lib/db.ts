@@ -8,6 +8,8 @@ import { getAdminFirestore } from './firebase-admin';
 import { coerceFirestoreInstantToIso } from './firestore-instant';
 import type { AdminRole } from './admin-roles';
 import { parseAdminRole } from './admin-roles';
+import { FirestoreQuotaError, isFirestoreQuotaError } from './firestore-errors';
+import { readStaffClaimsFromAuth, writeStaffClaims } from './staff-claims';
 
 const COLL = {
   institutions: 'institutions',
@@ -80,6 +82,17 @@ export interface Registration {
   flight_departure_date?: string;
   flight_departure_airline?: string;
   flight_departure_number?: string;
+  /** Horário de partida retornado pela AeroDataBox. */
+  flight_api_departure_time?: string;
+  /** Horário de chegada retornado pela AeroDataBox. */
+  flight_api_arrival_time?: string;
+  /** Terminal de desembarque retornado pela AeroDataBox. */
+  flight_api_arrival_terminal?: string;
+  /** Sigla IATA do aeroporto de destino retornada pela AeroDataBox. */
+  flight_api_destination_iata?: string;
+  flight_api_status?: string;
+  flight_api_updated_at?: string;
+  flight_api_error?: string;
   flight_return_time?: string;
   flight_return_date?: string;
   flight_return_airline?: string;
@@ -162,13 +175,17 @@ function validDocIds(ids: (string | undefined | null)[]): string[] {
 async function getInstitutionsByIds(ids: (string | undefined | null)[]): Promise<Map<string, Institution>> {
   const uniqueIds = validDocIds(ids);
   if (uniqueIds.length === 0) return new Map();
-  const refs = uniqueIds.map((id) => db().collection(COLL.institutions).doc(id));
-  const snaps = await db().getAll(...refs);
   const map = new Map<string, Institution>();
-  snaps.forEach((snap, i) => {
-    if (snap.exists && uniqueIds[i])
-      map.set(uniqueIds[i], { id: snap.id, ...snap.data() } as Institution);
-  });
+  const chunkSize = 30;
+  for (let i = 0; i < uniqueIds.length; i += chunkSize) {
+    const chunk = uniqueIds.slice(i, i + chunkSize);
+    const refs = chunk.map((id) => db().collection(COLL.institutions).doc(id));
+    const snaps = await db().getAll(...refs);
+    snaps.forEach((snap, idx) => {
+      if (snap.exists && chunk[idx])
+        map.set(chunk[idx], { id: snap.id, ...snap.data() } as Institution);
+    });
+  }
   return map;
 }
 
@@ -1114,23 +1131,28 @@ export async function deleteRegistration(p_registration_id: string): Promise<Del
 
 // --- List registrations ---
 export async function listRegistrations(): Promise<(Registration & { institution?: { name: string } })[]> {
-  const snap = await db()
-    .collection(COLL.registrations)
-    .orderBy('created_at', 'desc')
-    .get();
-  const list = snap.docs
-    .filter((d) => d.id !== '_init')
-    .map((d) => {
-      const raw = d.data() as Record<string, unknown>;
-      const reg = { id: d.id, ...raw } as Registration;
-      return { ...reg, checked_in_at: coerceFirestoreInstantToIso(raw.checked_in_at) };
-    });
+  const list = await listRegistrationsWithoutInstitutions();
   const institutionIds = list.map((r) => r.institution_id);
   const instMap = await getInstitutionsByIds(institutionIds);
   return list.map((r) => ({
     ...r,
     institution: instMap.get(r.institution_id) ? { name: instMap.get(r.institution_id)!.name } : undefined,
   }));
+}
+
+/** Lista inscrições sem hidratar instituições (para rotinas em lote). */
+export async function listRegistrationsWithoutInstitutions(): Promise<Registration[]> {
+  const snap = await db()
+    .collection(COLL.registrations)
+    .orderBy('created_at', 'desc')
+    .get();
+  return snap.docs
+    .filter((d) => d.id !== '_init')
+    .map((d) => {
+      const raw = d.data() as Record<string, unknown>;
+      const reg = { id: d.id, ...raw } as Registration;
+      return { ...reg, checked_in_at: coerceFirestoreInstantToIso(raw.checked_in_at) };
+    });
 }
 
 export async function listRegistrationsByInstitution(
@@ -1263,6 +1285,13 @@ export type UpdateRegistrationData = Partial<
     | 'flight_departure_date'
     | 'flight_departure_airline'
     | 'flight_departure_number'
+    | 'flight_api_departure_time'
+    | 'flight_api_arrival_time'
+    | 'flight_api_arrival_terminal'
+    | 'flight_api_destination_iata'
+    | 'flight_api_status'
+    | 'flight_api_updated_at'
+    | 'flight_api_error'
     | 'flight_return_time'
     | 'flight_return_date'
     | 'flight_return_airline'
@@ -1292,6 +1321,131 @@ export async function updateRegistration(
   }
   if (Object.keys(payload).length === 0) return;
   await db().collection(COLL.registrations).doc(id).update(payload);
+}
+
+export type FlightApiFields = {
+  flight_api_departure_time: string;
+  flight_api_arrival_time: string;
+  flight_api_arrival_terminal: string;
+  flight_api_destination_iata: string;
+  flight_api_status: string;
+  flight_api_updated_at: string;
+  flight_api_error: string;
+  flight_departure_time?: string;
+};
+
+export async function batchUpdateRegistrationFlightApi(
+  updates: Array<{ id: string } & FlightApiFields>
+): Promise<void> {
+  const firestore = db();
+  for (let i = 0; i < updates.length; i += 400) {
+    const chunk = updates.slice(i, i + 400);
+    const batch = firestore.batch();
+    for (const row of chunk) {
+      const payload: Record<string, string> = {
+        flight_api_departure_time: row.flight_api_departure_time,
+        flight_api_arrival_time: row.flight_api_arrival_time,
+        flight_api_arrival_terminal: row.flight_api_arrival_terminal,
+        flight_api_destination_iata: row.flight_api_destination_iata,
+        flight_api_status: row.flight_api_status,
+        flight_api_updated_at: row.flight_api_updated_at,
+        flight_api_error: row.flight_api_error,
+      };
+      if (row.flight_departure_time !== undefined) {
+        payload.flight_departure_time = row.flight_departure_time;
+      }
+      batch.update(firestore.collection(COLL.registrations).doc(row.id), payload);
+    }
+    await batch.commit();
+  }
+}
+
+export type FlightSyncMeta = {
+  running: boolean;
+  running_started_at: string | null;
+  last_daily_run_date: string | null;
+  last_run_at: string | null;
+  last_run_mode: string | null;
+  last_skip_reason: string | null;
+  last_looked_up: number;
+  last_updated: number;
+  last_errors: number;
+};
+
+const FLIGHT_SYNC_META_ID = 'flight_sync';
+const EMPTY_FLIGHT_SYNC_META: FlightSyncMeta = {
+  running: false,
+  running_started_at: null,
+  last_daily_run_date: null,
+  last_run_at: null,
+  last_run_mode: null,
+  last_skip_reason: null,
+  last_looked_up: 0,
+  last_updated: 0,
+  last_errors: 0,
+};
+
+function flightSyncMetaRef() {
+  return db().collection(COLL.counters).doc(FLIGHT_SYNC_META_ID);
+}
+
+function parseFlightSyncMeta(raw: Record<string, unknown> | undefined): FlightSyncMeta {
+  if (!raw) return { ...EMPTY_FLIGHT_SYNC_META };
+  return {
+    running: raw.running === true,
+    running_started_at: typeof raw.running_started_at === 'string' ? raw.running_started_at : null,
+    last_daily_run_date: typeof raw.last_daily_run_date === 'string' ? raw.last_daily_run_date : null,
+    last_run_at: typeof raw.last_run_at === 'string' ? raw.last_run_at : null,
+    last_run_mode: typeof raw.last_run_mode === 'string' ? raw.last_run_mode : null,
+    last_skip_reason: typeof raw.last_skip_reason === 'string' ? raw.last_skip_reason : null,
+    last_looked_up: typeof raw.last_looked_up === 'number' ? raw.last_looked_up : 0,
+    last_updated: typeof raw.last_updated === 'number' ? raw.last_updated : 0,
+    last_errors: typeof raw.last_errors === 'number' ? raw.last_errors : 0,
+  };
+}
+
+export async function getFlightSyncMeta(): Promise<FlightSyncMeta> {
+  const snap = await flightSyncMetaRef().get();
+  return parseFlightSyncMeta(snap.data() as Record<string, unknown> | undefined);
+}
+
+export async function beginFlightSyncRun(input: {
+  shouldSkip: (meta: FlightSyncMeta) => { skip: boolean; reason?: string };
+}): Promise<{ skipped: true; reason: string; meta: FlightSyncMeta } | { skipped: false; meta: FlightSyncMeta }> {
+  return db().runTransaction(async (tx) => {
+    const ref = flightSyncMetaRef();
+    const snap = await tx.get(ref);
+    const meta = parseFlightSyncMeta(snap.data() as Record<string, unknown> | undefined);
+    const decision = input.shouldSkip(meta);
+    if (decision.skip) {
+      tx.set(
+        ref,
+        { ...meta, last_skip_reason: decision.reason ?? 'skipped' },
+        { merge: true }
+      );
+      return { skipped: true as const, reason: decision.reason ?? 'skipped', meta };
+    }
+    const startedAt = new Date().toISOString();
+    const next: FlightSyncMeta = {
+      ...meta,
+      running: true,
+      running_started_at: startedAt,
+      last_skip_reason: null,
+    };
+    tx.set(ref, next, { merge: true });
+    return { skipped: false as const, meta: next };
+  });
+}
+
+export async function finishFlightSyncRun(patch: Partial<FlightSyncMeta>): Promise<void> {
+  await flightSyncMetaRef().set(
+    {
+      running: false,
+      running_started_at: null,
+      ...patch,
+    },
+    { merge: true }
+  );
 }
 
 export async function createImportedRegistration(data: {
@@ -1471,20 +1625,104 @@ export async function canDoCheckin(userId: string): Promise<boolean> {
   return role === 'admin' || role === 'checkin';
 }
 
-export async function getAdmin(userId: string): Promise<AdminProfile | null> {
-  const doc = await db().collection(COLL.admins).doc(userId).get();
-  if (!doc.exists) return null;
-  const d = doc.data()!;
+const ADMIN_CACHE_TTL_MS = 10 * 60 * 1000;
+const ADMIN_QUOTA_COOLDOWN_MS = 60 * 1000;
+const adminProfileCache = new Map<string, { profile: AdminProfile | null; expiresAt: number }>();
+const adminProfileInflight = new Map<string, Promise<AdminProfile | null>>();
+let adminFirestoreBlockedUntil = 0;
+
+function isAdminFirestoreBlocked(): boolean {
+  return Date.now() < adminFirestoreBlockedUntil;
+}
+
+function blockAdminFirestore(): void {
+  adminFirestoreBlockedUntil = Date.now() + ADMIN_QUOTA_COOLDOWN_MS;
+}
+
+function readAdminCache(userId: string, allowStale = false): AdminProfile | null | undefined {
+  const hit = adminProfileCache.get(userId);
+  if (!hit) return undefined;
+  if (!allowStale && hit.expiresAt < Date.now()) return undefined;
+  return hit.profile;
+}
+
+function writeAdminCache(userId: string, profile: AdminProfile | null): void {
+  adminProfileCache.set(userId, { profile, expiresAt: Date.now() + ADMIN_CACHE_TTL_MS });
+}
+
+export function invalidateAdminCache(userId?: string): void {
+  if (userId) adminProfileCache.delete(userId);
+  else adminProfileCache.clear();
+}
+
+function parseAdminDoc(_userId: string, data: Record<string, unknown>): AdminProfile {
   const institutionId =
-    typeof d.institution_id === 'string' && d.institution_id.trim()
-      ? d.institution_id.trim()
+    typeof data.institution_id === 'string' && data.institution_id.trim()
+      ? data.institution_id.trim()
       : undefined;
   return {
-    enabled: d.enabled,
-    hasChangedPassword: !!d.passwordChangedAt,
-    role: parseAdminRole(d.role),
+    enabled: !!data.enabled,
+    hasChangedPassword: !!data.passwordChangedAt,
+    role: parseAdminRole(data.role),
     institution_id: institutionId,
   };
+}
+
+function persistStaffClaims(userId: string, profile: AdminProfile | null): void {
+  void writeStaffClaims(userId, profile).catch((error) => {
+    console.warn('Failed to persist staff claims:', error);
+  });
+}
+
+export async function getAdmin(userId: string): Promise<AdminProfile | null> {
+  const cached = readAdminCache(userId);
+  if (cached !== undefined) return cached;
+
+  const pending = adminProfileInflight.get(userId);
+  if (pending) return pending;
+
+  const load = (async () => {
+    try {
+      const fromAuth = await readStaffClaimsFromAuth(userId);
+      if (fromAuth) {
+        writeAdminCache(userId, fromAuth);
+        return fromAuth;
+      }
+    } catch {
+      /* Auth lookup is optional; Firestore is the source of truth. */
+    }
+
+    if (isAdminFirestoreBlocked()) {
+      const stale = readAdminCache(userId, true);
+      if (stale !== undefined) return stale;
+      throw new FirestoreQuotaError();
+    }
+
+    try {
+      const doc = await db().collection(COLL.admins).doc(userId).get();
+      const profile = doc.exists ? parseAdminDoc(userId, (doc.data() ?? {}) as Record<string, unknown>) : null;
+      writeAdminCache(userId, profile);
+      persistStaffClaims(userId, profile);
+      return profile;
+    } catch (error) {
+      if (isFirestoreQuotaError(error)) {
+        blockAdminFirestore();
+      }
+      const stale = readAdminCache(userId, true);
+      if (stale !== undefined) return stale;
+      if (isFirestoreQuotaError(error)) {
+        throw new FirestoreQuotaError();
+      }
+      throw error;
+    }
+  })();
+
+  adminProfileInflight.set(userId, load);
+  try {
+    return await load;
+  } finally {
+    adminProfileInflight.delete(userId);
+  }
 }
 
 export async function createAdminUser(params: {
@@ -1502,6 +1740,13 @@ export async function createAdminUser(params: {
     data.institution_id = params.institution_id;
   }
   await db().collection(COLL.admins).doc(params.uid).set(data, { merge: true });
+  invalidateAdminCache(params.uid);
+  persistStaffClaims(params.uid, {
+    enabled: true,
+    hasChangedPassword: false,
+    role: params.role,
+    institution_id: params.role === 'secretaria' ? params.institution_id : undefined,
+  });
 }
 
 export async function updateAdminUser(
@@ -1523,6 +1768,7 @@ export async function updateAdminUser(
   }
   if (Object.keys(data).length === 0) return;
   await db().collection(COLL.admins).doc(uid).update(data);
+  invalidateAdminCache(uid);
 }
 
 export async function setAdminPasswordChanged(userId: string): Promise<void> {
@@ -1530,6 +1776,7 @@ export async function setAdminPasswordChanged(userId: string): Promise<void> {
   await db().collection(COLL.admins).doc(userId).update({
     passwordChangedAt: FieldValue.serverTimestamp(),
   });
+  invalidateAdminCache(userId);
 }
 
 export interface AdminListEntry {

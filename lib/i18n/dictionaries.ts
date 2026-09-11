@@ -200,6 +200,7 @@ export interface Dictionary {
     unauthorized: string;
     notFound: string;
     rateLimitExceeded: string;
+    quotaExceeded: string;
   };
 
   admin: {
@@ -220,6 +221,8 @@ export interface Dictionary {
       workshopsAndPlenarias: string;
       vouchers: string;
       registrations: string;
+      flights: string;
+      flightLookup: string;
       checkin: string;
       users: string;
       settings: string;
@@ -543,6 +546,65 @@ export interface Dictionary {
       previous: string;
       nextPage: string;
     };
+
+    flights: {
+      title: string;
+      subtitle: string;
+      empty: string;
+      name: string;
+      whatsapp: string;
+      airline: string;
+      number: string;
+      arrivalTime: string;
+      departureTime: string;
+      arrivalTerminal: string;
+      destinationAirport: string;
+      status: string;
+      syncColumn: string;
+      lastSync: string;
+      neverSynced: string;
+      syncNow: string;
+      syncDone: string;
+      syncSkipped: string;
+      syncOne: string;
+      syncOneDone: string;
+      syncOneNotFound: string;
+    };
+
+    flightLookup: {
+      title: string;
+      subtitle: string;
+      formTitle: string;
+      formHint: string;
+      flightCode: string;
+      flightCodePlaceholder: string;
+      travelDate: string;
+      search: string;
+      origin: string;
+      destination: string;
+      departureTime: string;
+      arrivalTime: string;
+      departureTerminal: string;
+      arrivalTerminal: string;
+      empty: string;
+      rawResponse: string;
+      rawResponseHint: string;
+      statusScheduled: string;
+      statusActive: string;
+      statusLanded: string;
+      statusCancelled: string;
+      statusIncident: string;
+      statusDiverted: string;
+      errorMissingKey: string;
+      errorInvalidKey: string;
+      errorNotSubscribed: string;
+      errorInvalidFlight: string;
+      errorInvalidDate: string;
+      errorMissingParams: string;
+      errorPlanRestricted: string;
+      errorUsageLimit: string;
+      errorGeneric: string;
+    };
   };
 
   email: {
@@ -779,6 +841,7 @@ export const dictionaries: Record<Language, Dictionary> = {
       unauthorized: 'Acesso não autorizado',
       notFound: 'Não encontrado',
       rateLimitExceeded: 'Muitas tentativas. Aguarde um momento.',
+      quotaExceeded: 'O serviço está temporariamente indisponível por limite de uso. Tente novamente em instantes.',
     },
 
     admin: {
@@ -799,6 +862,8 @@ export const dictionaries: Record<Language, Dictionary> = {
         workshopsAndPlenarias: 'Workshops e Plenárias',
         vouchers: 'Vouchers',
         registrations: 'Inscrições',
+        flights: 'Voos',
+        flightLookup: 'Consulta voo',
         checkin: 'Check-in',
         users: 'Usuários',
         settings: 'Configurações',
@@ -1124,6 +1189,68 @@ export const dictionaries: Record<Language, Dictionary> = {
         previous: 'Anterior',
         nextPage: 'Próxima',
       },
+
+      flights: {
+        title: 'Voos de ida',
+        subtitle:
+          'Inscritos confirmados sem transporte próprio, excluindo Novo Tempo, DSA, UCoB, IATeC, CPB e UCB. Horário de chegada e terminal vêm da consulta automática dos voos.',
+        empty: 'Nenhum participante com voo de ida nesta lista.',
+        name: 'Nome',
+        whatsapp: 'Whatsapp',
+        airline: 'Com. Ida',
+        number: 'Num. Ida',
+        arrivalTime: 'H. chegada',
+        departureTime: 'Horário de partida',
+        arrivalTerminal: 'Terminal',
+        destinationAirport: 'Aeroporto',
+        status: 'Status',
+        syncColumn: 'Sync',
+        lastSync: 'Última atualização: {time}',
+        neverSynced: 'Os voos ainda não foram consultados na API.',
+        syncNow: 'Atualizar voos',
+        syncDone: 'Dados dos voos atualizados',
+        syncSkipped: 'A consulta automática já está em dia.',
+        syncOne: 'Atualizar este voo',
+        syncOneDone: 'Voo atualizado',
+        syncOneNotFound: 'Não encontrei este voo na API.',
+      },
+
+      flightLookup: {
+        title: 'Consulta de voo',
+        subtitle: 'Busca status e horários em tempo real pelo código e pela data da viagem.',
+        formTitle: 'Dados do voo',
+        formHint: 'Informe o código IATA (ex.: LA3094) e a data do voo. A data padrão é 14/09/2026.',
+        flightCode: 'Código do voo',
+        flightCodePlaceholder: 'LA3094',
+        travelDate: 'Data da viagem',
+        search: 'Consultar',
+        origin: 'Aeroporto de origem',
+        destination: 'Aeroporto de destino',
+        departureTime: 'Horário de saída',
+        arrivalTime: 'Horário de chegada',
+        departureTerminal: 'Terminal de saída',
+        arrivalTerminal: 'Terminal de chegada',
+        empty: 'Nenhum voo encontrado para esse código e data.',
+        rawResponse: 'Retorno da API',
+        rawResponseHint: 'Resposta completa da AeroDataBox (a chave de acesso não é exibida).',
+        statusScheduled: 'Programado',
+        statusActive: 'Em voo',
+        statusLanded: 'Pousou',
+        statusCancelled: 'Cancelado',
+        statusIncident: 'Incidente',
+        statusDiverted: 'Desviado',
+        errorMissingKey: 'A chave da AeroDataBox não está configurada no servidor.',
+        errorInvalidKey:
+          'A chave da AeroDataBox é inválida ou está inativa. Gere uma chave ativa no painel (portal direto, RapidAPI ou API.Market).',
+        errorNotSubscribed:
+          'Esta chave não está inscrita neste canal. Chaves no formato UUID usam o API.Market; chaves da RapidAPI exigem assinatura em rapidapi.com.',
+        errorInvalidFlight: 'Código de voo inválido.',
+        errorInvalidDate: 'Data da viagem inválida.',
+        errorMissingParams: 'Informe o código do voo e a data.',
+        errorPlanRestricted: 'Este plano da AeroDataBox não permite esta consulta.',
+        errorUsageLimit: 'Limite de consultas da AeroDataBox atingido.',
+        errorGeneric: 'Não foi possível consultar o voo. Tente novamente.',
+      },
     },
 
     email: {
@@ -1359,6 +1486,7 @@ export const dictionaries: Record<Language, Dictionary> = {
       unauthorized: 'Acceso no autorizado',
       notFound: 'No encontrado',
       rateLimitExceeded: 'Demasiados intentos. Espere un momento.',
+      quotaExceeded: 'El servicio está temporalmente indisponible por límite de uso. Intente de nuevo en instantes.',
     },
 
     admin: {
@@ -1379,6 +1507,8 @@ export const dictionaries: Record<Language, Dictionary> = {
         workshopsAndPlenarias: 'Workshops y Plenarias',
         vouchers: 'Vouchers',
         registrations: 'Inscripciones',
+        flights: 'Vuelos',
+        flightLookup: 'Consulta vuelo',
         checkin: 'Registro',
         users: 'Usuarios',
         settings: 'Configuración',
@@ -1703,6 +1833,68 @@ export const dictionaries: Record<Language, Dictionary> = {
         showingOf: 'Mostrando {from}–{to} de {total}',
         previous: 'Anterior',
         nextPage: 'Siguiente',
+      },
+
+      flights: {
+        title: 'Vuelos de ida',
+        subtitle:
+          'Inscritos confirmados sin transporte propio, excluyendo Novo Tempo, DSA, UCoB, IATeC, CPB y UCB. El horario de llegada y la terminal vienen de la consulta automática de vuelos.',
+        empty: 'Ningún participante con vuelo de ida en esta lista.',
+        name: 'Nombre',
+        whatsapp: 'Whatsapp',
+        airline: 'Com. Ida',
+        number: 'Num. Ida',
+        arrivalTime: 'H. llegada',
+        departureTime: 'Horario de partida',
+        arrivalTerminal: 'Terminal',
+        destinationAirport: 'Aeropuerto',
+        status: 'Status',
+        syncColumn: 'Sync',
+        lastSync: 'Última actualización: {time}',
+        neverSynced: 'Los vuelos aún no fueron consultados en la API.',
+        syncNow: 'Actualizar vuelos',
+        syncDone: 'Datos de los vuelos actualizados',
+        syncSkipped: 'La consulta automática ya está al día.',
+        syncOne: 'Actualizar este vuelo',
+        syncOneDone: 'Vuelo actualizado',
+        syncOneNotFound: 'No encontré este vuelo en la API.',
+      },
+
+      flightLookup: {
+        title: 'Consulta de vuelo',
+        subtitle: 'Busca estado y horarios en tiempo real por código y fecha de viaje.',
+        formTitle: 'Datos del vuelo',
+        formHint: 'Informe el código IATA (ej.: LA3094) y la fecha del vuelo. La fecha predeterminada es 14/09/2026.',
+        flightCode: 'Código del vuelo',
+        flightCodePlaceholder: 'LA3094',
+        travelDate: 'Fecha del viaje',
+        search: 'Consultar',
+        origin: 'Aeropuerto de origen',
+        destination: 'Aeropuerto de destino',
+        departureTime: 'Horario de salida',
+        arrivalTime: 'Horario de llegada',
+        departureTerminal: 'Terminal de salida',
+        arrivalTerminal: 'Terminal de llegada',
+        empty: 'Ningún vuelo encontrado para ese código y fecha.',
+        rawResponse: 'Respuesta de la API',
+        rawResponseHint: 'Respuesta completa de AeroDataBox (la clave de acceso no se muestra).',
+        statusScheduled: 'Programado',
+        statusActive: 'En vuelo',
+        statusLanded: 'Aterrizó',
+        statusCancelled: 'Cancelado',
+        statusIncident: 'Incidente',
+        statusDiverted: 'Desviado',
+        errorMissingKey: 'La clave de AeroDataBox no está configurada en el servidor.',
+        errorInvalidKey:
+          'La clave de AeroDataBox es inválida o está inactiva. Genere una clave activa en el panel (portal directo, RapidAPI o API.Market).',
+        errorNotSubscribed:
+          'Esta clave no está inscrita en este canal. Las claves UUID usan API.Market; las de RapidAPI requieren suscripción en rapidapi.com.',
+        errorInvalidFlight: 'Código de vuelo inválido.',
+        errorInvalidDate: 'Fecha del viaje inválida.',
+        errorMissingParams: 'Informe el código del vuelo y la fecha.',
+        errorPlanRestricted: 'Este plan de AeroDataBox no permite esta consulta.',
+        errorUsageLimit: 'Se alcanzó el límite de consultas de AeroDataBox.',
+        errorGeneric: 'No fue posible consultar el vuelo. Intente de nuevo.',
       },
     },
 

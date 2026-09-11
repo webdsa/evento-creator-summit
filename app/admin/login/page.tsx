@@ -38,7 +38,9 @@ export default function AdminLoginPage() {
 
     const result = await signIn(email, password);
 
-    if (result.error) {
+    if (result.error === 'quota_exceeded') {
+      setError(t.errors.quotaExceeded);
+    } else if (result.error) {
       setError(t.admin.login.invalidCredentials);
     }
 

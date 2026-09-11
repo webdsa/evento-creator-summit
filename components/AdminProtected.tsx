@@ -3,12 +3,14 @@
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthProvider';
+import { useLanguage } from '@/lib/i18n';
 import { isSecretariaPathAllowed, staffHomePath } from '@/lib/admin-roles';
 import { AdminNav } from './AdminNav';
 import { Loader2 } from 'lucide-react';
 
 export function AdminProtected({ children }: { children: React.ReactNode }) {
-  const { user, loading, mustChangePassword, role } = useAuth();
+  const { user, loading, mustChangePassword, role, quotaExceeded } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -54,8 +56,11 @@ export function AdminProtected({ children }: { children: React.ReactNode }) {
 
   if (mustChangePassword === null || (mustChangePassword === false && role === null)) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 px-4">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        {quotaExceeded ? (
+          <p className="text-sm text-muted-foreground text-center max-w-md">{t.errors.quotaExceeded}</p>
+        ) : null}
       </div>
     );
   }

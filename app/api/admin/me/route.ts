@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
-import { getAdmin } from '@/lib/db';
+import { getCurrentUser, resolveAdminProfile } from '@/lib/auth';
+import { isFirestoreQuotaError } from '@/lib/firestore-errors';
 
 /**
  * GET /api/admin/me
@@ -13,14 +13,23 @@ export async function GET(request: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
-  const admin = await getAdmin(user.uid);
-  if (!admin?.enabled) {
-    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+
+  try {
+    const admin = await resolveAdminProfile(user);
+    if (!admin?.enabled) {
+      return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+    }
+    return NextResponse.json({
+      ok: true,
+      mustChangePassword: !admin.hasChangedPassword,
+      role: admin.role,
+      institution_id: admin.institution_id ?? null,
+    });
+  } catch (error) {
+    if (isFirestoreQuotaError(error)) {
+      return NextResponse.json({ error: 'quota_exceeded' }, { status: 503 });
+    }
+    console.error('GET /api/admin/me error:', error);
+    return NextResponse.json({ error: 'genericError' }, { status: 500 });
   }
-  return NextResponse.json({
-    ok: true,
-    mustChangePassword: !admin.hasChangedPassword,
-    role: admin.role,
-    institution_id: admin.institution_id ?? null,
-  });
 }
