@@ -1,18 +1,21 @@
-export type AdminRole = 'admin' | 'checkin' | 'secretaria';
+export type AdminRole = 'admin' | 'checkin' | 'secretaria' | 'logistica';
 
 export function parseAdminRole(value: unknown): AdminRole {
-  if (value === 'checkin' || value === 'secretaria') return value;
+  if (value === 'checkin' || value === 'secretaria' || value === 'logistica') return value;
   return 'admin';
 }
 
 export function parseStrictAdminRole(value: unknown): AdminRole | null {
-  if (value === 'admin' || value === 'checkin' || value === 'secretaria') return value;
+  if (value === 'admin' || value === 'checkin' || value === 'secretaria' || value === 'logistica') {
+    return value;
+  }
   return null;
 }
 
 export function staffHomePath(role: AdminRole | null | undefined): string {
   if (role === 'checkin') return '/admin/checkin';
   if (role === 'secretaria') return '/admin/registrations';
+  if (role === 'logistica') return '/admin/voos';
   return '/admin';
 }
 
@@ -25,5 +28,13 @@ export function isSecretariaPathAllowed(pathname: string): boolean {
     pathname.startsWith('/admin/voos/') ||
     pathname === '/admin/consulta-voo' ||
     pathname.startsWith('/admin/consulta-voo/')
+  );
+}
+
+export function isLogisticaPathAllowed(pathname: string): boolean {
+  return (
+    pathname === '/admin/settings' ||
+    pathname === '/admin/voos' ||
+    pathname.startsWith('/admin/voos/')
   );
 }

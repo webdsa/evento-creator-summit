@@ -6,6 +6,7 @@ import { AdminProtected } from '@/components/AdminProtected';
 import { useLanguage } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthProvider';
 import { fetchWithAuth } from '@/lib/admin-api';
+import type { AdminRole } from '@/lib/admin-roles';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,7 +23,7 @@ import { UserPlus, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
-type Role = 'admin' | 'checkin' | 'secretaria';
+type Role = AdminRole;
 
 interface InstitutionOption {
   id: string;
@@ -133,7 +134,7 @@ export default function AdminUsersNewPage() {
     }
   };
 
-  if (role === 'checkin' || role === 'secretaria') {
+  if (role === 'checkin' || role === 'secretaria' || role === 'logistica') {
     return null;
   }
 
@@ -202,6 +203,7 @@ export default function AdminUsersNewPage() {
                     <SelectItem value="admin">{t.admin.users.roleAdmin}</SelectItem>
                     <SelectItem value="checkin">{t.admin.users.roleCheckin}</SelectItem>
                     <SelectItem value="secretaria">{t.admin.users.roleSecretaria}</SelectItem>
+                    <SelectItem value="logistica">{t.admin.users.roleLogistica}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

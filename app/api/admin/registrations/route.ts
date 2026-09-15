@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireRegistrationsAccess } from '@/lib/auth';
+import { requireFlightsAccess } from '@/lib/auth';
 import { listRegistrations, listRegistrationsByInstitution } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   let staff;
   try {
     const authHeader = request.headers.get('authorization');
-    staff = await requireRegistrationsAccess(authHeader);
+    staff = await requireFlightsAccess(authHeader);
   } catch {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }

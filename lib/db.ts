@@ -1220,13 +1220,36 @@ export async function getRegistrationByCodeAndEmail(
   return { ...r, institution: { name: inst.name, group } };
 }
 
+export type CheckinLookupItem = {
+  id: string;
+  registration_code: string;
+  full_name: string;
+  email: string;
+  documento: string;
+  status: string;
+  checked_in_at: string | null;
+};
+
+function mapCheckinLookupItem(
+  id: string,
+  d: admin.firestore.DocumentData,
+  fallbackCode?: string
+): CheckinLookupItem {
+  return {
+    id,
+    registration_code: (d?.registration_code as string) ?? fallbackCode ?? '',
+    full_name: (d?.full_name as string) ?? '',
+    email: (d?.email as string) ?? '',
+    documento: (d?.documento as string) ?? '',
+    status: (d?.status as string) ?? 'confirmed',
+    checked_in_at: coerceFirestoreInstantToIso(d?.checked_in_at),
+  };
+}
+
 /** Busca inscrição apenas por código (para check-in do organizador). Retorna dados mínimos. */
 export async function getRegistrationByCodeForCheckin(
   registrationCode: string
-): Promise<
-  | { id: string; registration_code: string; full_name: string; status: string; checked_in_at: string | null }
-  | null
-> {
+): Promise<CheckinLookupItem | null> {
   const code = registrationCode.trim().toUpperCase();
   if (!code) return null;
   const snap = await db()
@@ -1236,14 +1259,76 @@ export async function getRegistrationByCodeForCheckin(
     .get();
   if (snap.empty) return null;
   const doc = snap.docs[0];
-  const d = doc.data();
-  return {
-    id: doc.id,
-    registration_code: (d?.registration_code as string) ?? code,
-    full_name: (d?.full_name as string) ?? '',
-    status: (d?.status as string) ?? 'confirmed',
-    checked_in_at: coerceFirestoreInstantToIso(d?.checked_in_at),
-  };
+  return mapCheckinLookupItem(doc.id, doc.data(), code);
+}
+
+const CHECKIN_SEARCH_LIMIT = 20;
+
+function normalizeCheckinSearch(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function matchesCheckinQuery(
+  item: CheckinLookupItem,
+  extras: { handle: string; emailNormalized: string; cracha: string },
+  query: string
+): boolean {
+  const q = normalizeCheckinSearch(query);
+  if (!q) return false;
+  const qAlnum = q.replace(/[^a-z0-9]/g, '');
+  const haystacks = [
+    item.registration_code,
+    item.full_name,
+    item.email,
+    item.documento,
+    extras.handle,
+    extras.emailNormalized,
+    extras.cracha,
+  ];
+  if (haystacks.some((value) => value.toLowerCase().includes(q))) return true;
+  if (qAlnum.length > 0) {
+    const documentoAlnum = item.documento.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (documentoAlnum.includes(qAlnum)) return true;
+  }
+  return false;
+}
+
+/**
+ * Busca inscrições para check-in por código, nome, e-mail/handle ou documento.
+ * Código exato tem prioridade e devolve só aquele registro.
+ */
+export async function searchRegistrationsForCheckin(query: string): Promise<CheckinLookupItem[]> {
+  const raw = query.trim();
+  if (!raw) return [];
+
+  const byCode = await getRegistrationByCodeForCheckin(raw);
+  if (byCode) return [byCode];
+
+  if (raw.length < 2) return [];
+
+  const snap = await db().collection(COLL.registrations).get();
+  const matches: CheckinLookupItem[] = [];
+  for (const doc of snap.docs) {
+    if (doc.id === '_init') continue;
+    const d = doc.data();
+    const item = mapCheckinLookupItem(doc.id, d);
+    if (
+      !matchesCheckinQuery(
+        item,
+        {
+          handle: (d?.link_or_handle as string) ?? '',
+          emailNormalized: (d?.email_normalized as string) ?? '',
+          cracha: (d?.cracha as string) ?? '',
+        },
+        raw
+      )
+    ) {
+      continue;
+    }
+    matches.push(item);
+  }
+  matches.sort((a, b) => a.full_name.localeCompare(b.full_name, undefined, { sensitivity: 'base' }));
+  return matches.slice(0, CHECKIN_SEARCH_LIMIT);
 }
 
 /** Grava instante do check-in como Timestamp e devolve o mesmo momento em ISO UTC (alinhado à API/UI). */
@@ -1769,6 +1854,12 @@ export async function updateAdminUser(
   if (Object.keys(data).length === 0) return;
   await db().collection(COLL.admins).doc(uid).update(data);
   invalidateAdminCache(uid);
+  const doc = await db().collection(COLL.admins).doc(uid).get();
+  const profile = doc.exists
+    ? parseAdminDoc(uid, (doc.data() ?? {}) as Record<string, unknown>)
+    : null;
+  writeAdminCache(uid, profile);
+  persistStaffClaims(uid, profile);
 }
 
 export async function setAdminPasswordChanged(userId: string): Promise<void> {

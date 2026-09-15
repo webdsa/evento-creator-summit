@@ -15,7 +15,14 @@ export function AdminNav() {
 
   const isCheckinOnly = role === 'checkin';
   const isSecretaria = role === 'secretaria';
-  const homeHref = isCheckinOnly ? '/admin/checkin' : isSecretaria ? '/admin/registrations' : '/admin';
+  const isLogistica = role === 'logistica';
+  const homeHref = isCheckinOnly
+    ? '/admin/checkin'
+    : isSecretaria
+      ? '/admin/registrations'
+      : isLogistica
+        ? '/admin/voos'
+        : '/admin';
 
   const navItemsLeftFull = [
     { href: '/admin', label: t.admin.nav.dashboard, icon: LayoutDashboard },
@@ -36,15 +43,17 @@ export function AdminNav() {
 
   const navItemsLeft = isCheckinOnly
     ? [{ href: '/admin/checkin', label: t.admin.nav.checkin, icon: QrCode }]
-    : isSecretaria
-      ? [
-          { href: '/admin/registrations', label: t.admin.nav.registrations, icon: Users },
-          { href: '/admin/voos', label: t.admin.nav.flights, icon: Plane },
-          { href: '/admin/consulta-voo', label: t.admin.nav.flightLookup, icon: Search },
-        ]
-      : navItemsLeftFull;
+    : isLogistica
+      ? [{ href: '/admin/voos', label: t.admin.nav.flights, icon: Plane }]
+      : isSecretaria
+        ? [
+            { href: '/admin/registrations', label: t.admin.nav.registrations, icon: Users },
+            { href: '/admin/voos', label: t.admin.nav.flights, icon: Plane },
+            { href: '/admin/consulta-voo', label: t.admin.nav.flightLookup, icon: Search },
+          ]
+        : navItemsLeftFull;
 
-  const navItemsRight = isCheckinOnly || isSecretaria ? [] : navItemsRightFull;
+  const navItemsRight = isCheckinOnly || isSecretaria || isLogistica ? [] : navItemsRightFull;
 
   const renderNavButton = (item: (typeof navItemsLeft)[0]) => {
     const Icon = item.icon;

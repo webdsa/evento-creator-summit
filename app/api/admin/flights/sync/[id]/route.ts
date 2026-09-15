@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { canAccessRegistration, requireRegistrationsAccess } from '@/lib/auth';
+import { canAccessRegistration, requireFlightsAccess } from '@/lib/auth';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getRegistrationById } from '@/lib/db';
 import { syncRegistrationFlight } from '@/lib/flight-sync';
@@ -13,7 +13,7 @@ export async function POST(
 ) {
   let staff;
   try {
-    staff = await requireRegistrationsAccess(request.headers.get('authorization'));
+    staff = await requireFlightsAccess(request.headers.get('authorization'));
   } catch {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }

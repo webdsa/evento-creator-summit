@@ -16,22 +16,29 @@ import { formatInAppTz } from '@/lib/app-timezone';
 
 export const dynamic = 'force-dynamic';
 
-const CONFIRM_COUNTDOWN_SECONDS = 3;
+const CONFIRM_COUNTDOWN_SECONDS = 10;
 
 type LookupResult = {
   id: string;
   registrationCode: string;
   fullName: string;
+  email?: string;
+  documento?: string;
   checkedInAt: string | null;
 };
+
+function formatLookupDetails(item: LookupResult) {
+  return [item.registrationCode, item.email, item.documento].filter(Boolean).join(' · ');
+}
 
 export default function AdminCheckinPage() {
   const { t } = useLanguage();
   const { getIdToken } = useAuth();
-  const [code, setCode] = useState('');
+  const [query, setQuery] = useState('');
   const [lookupLoading, setLookupLoading] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [lookupResult, setLookupResult] = useState<LookupResult | null>(null);
+  const [lookupMatches, setLookupMatches] = useState<LookupResult[] | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [confirmSuccess, setConfirmSuccess] = useState<string | null>(null);
   const [confirmAlready, setConfirmAlready] = useState(false);
@@ -39,12 +46,28 @@ export default function AdminCheckinPage() {
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [scannerKey, setScannerKey] = useState(0);
 
+  const applyLookupPayload = useCallback((data: LookupResult | { matches?: LookupResult[] }) => {
+    if ('matches' in data && Array.isArray(data.matches) && data.matches.length > 0) {
+      if (data.matches.length === 1) {
+        setLookupResult(data.matches[0]);
+        setLookupMatches(null);
+        return;
+      }
+      setLookupResult(null);
+      setLookupMatches(data.matches);
+      return;
+    }
+    setLookupMatches(null);
+    setLookupResult(data as LookupResult);
+  }, []);
+
   const doLookup = useCallback(
-    async (codeValue: string) => {
-      const c = codeValue.trim().toUpperCase();
-      if (!c) return;
+    async (queryValue: string, opts?: { fromScan?: boolean }) => {
+      const q = queryValue.trim();
+      if (!q) return;
       setLookupError(null);
       setLookupResult(null);
+      setLookupMatches(null);
       setConfirmSuccess(null);
       setConfirmAlready(false);
       setCountdown(null);
@@ -54,9 +77,11 @@ export default function AdminCheckinPage() {
       }
       setLookupLoading(true);
       try {
+        const param = opts?.fromScan ? 'code' : 'q';
+        const value = opts?.fromScan ? q.toUpperCase() : q;
         const res = await fetchWithAuth(
           getIdToken,
-          `/api/admin/checkin/lookup?code=${encodeURIComponent(c)}`
+          `/api/admin/checkin/lookup?${param}=${encodeURIComponent(value)}`
         );
         const data = await res.json();
         if (!res.ok) {
@@ -65,21 +90,21 @@ export default function AdminCheckinPage() {
           else setLookupError(t.admin.checkin.errorGeneric);
           return;
         }
-        setLookupResult(data);
-        setCode(c);
+        applyLookupPayload(data);
+        setQuery(value);
       } catch {
         setLookupError(t.admin.checkin.errorGeneric);
       } finally {
         setLookupLoading(false);
       }
     },
-    [getIdToken, t.admin.checkin]
+    [getIdToken, t.admin.checkin, applyLookupPayload]
   );
 
   const handleScan = useCallback(
     (scannedCode: string) => {
       const c = scannedCode.trim().toUpperCase();
-      if (c && !lookupLoading) doLookup(c);
+      if (c && !lookupLoading) doLookup(c, { fromScan: true });
     },
     [doLookup, lookupLoading]
   );
@@ -123,8 +148,9 @@ export default function AdminCheckinPage() {
   }, [lookupResult, getIdToken, t.admin.checkin]);
 
   const resetAndScanAgain = useCallback(() => {
-    setCode('');
+    setQuery('');
     setLookupResult(null);
+    setLookupMatches(null);
     setLookupError(null);
     setConfirmSuccess(null);
     setConfirmAlready(false);
@@ -176,6 +202,7 @@ export default function AdminCheckinPage() {
     }
   }, [countdown, handleConfirmCheckin]);
 
+  const showingMatches = !lookupResult && !!lookupMatches?.length;
   const showingConfirmation = lookupResult && !lookupResult.checkedInAt;
   const showingSuccess = lookupResult?.checkedInAt;
 
@@ -201,16 +228,18 @@ export default function AdminCheckinPage() {
               <QrCode className="h-5 w-5" />
               {lookupResult
                 ? t.admin.checkin.confirmFor.replace('{name}', lookupResult.fullName)
-                : t.admin.checkin.scanQR}
+                : showingMatches
+                  ? t.admin.checkin.pickFromResults
+                  : t.admin.checkin.scanQR}
             </CardTitle>
             <CardDescription>
               {lookupResult
-                ? lookupResult.registrationCode
+                ? formatLookupDetails(lookupResult)
                 : t.admin.checkin.scanQRHint}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {!lookupResult ? (
+            {!lookupResult && !showingMatches ? (
               <>
                 <QRScanner
                   key={scannerKey}
@@ -219,30 +248,55 @@ export default function AdminCheckinPage() {
                   forceCameraLabel={t.admin.checkin.forceCamera}
                 />
                 <div className="space-y-2">
-                  <Label htmlFor="manual-code">{t.admin.checkin.manualCode}</Label>
+                  <Label htmlFor="manual-query">{t.admin.checkin.manualCode}</Label>
                   <div className="flex gap-2">
                     <Input
-                      id="manual-code"
+                      id="manual-query"
                       placeholder={t.admin.checkin.codePlaceholder}
-                      value={code}
-                      onChange={(e) => setCode(e.target.value.toUpperCase())}
-                      onKeyDown={(e) => e.key === 'Enter' && doLookup(code)}
-                      className="font-mono"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && doLookup(query)}
                       disabled={lookupLoading}
                     />
                     <Button
                       type="button"
-                      onClick={() => doLookup(code)}
-                      disabled={lookupLoading || !code.trim()}
+                      onClick={() => doLookup(query)}
+                      disabled={lookupLoading || !query.trim()}
                     >
                       {lookupLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t.admin.checkin.lookup}
                     </Button>
                   </div>
                 </div>
               </>
+            ) : showingMatches ? (
+              <div className="space-y-3">
+                <ul className="divide-y rounded-md border">
+                  {lookupMatches!.map((match) => (
+                    <li key={match.id}>
+                      <button
+                        type="button"
+                        className="flex w-full flex-col items-start gap-0.5 px-3 py-3 text-left hover:bg-muted/60"
+                        onClick={() => {
+                          setLookupMatches(null);
+                          setLookupResult(match);
+                        }}
+                      >
+                        <span className="font-medium">{match.fullName}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {formatLookupDetails(match)}
+                          {match.checkedInAt ? ` · ${t.admin.checkin.alreadyCheckedIn}` : ''}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <Button variant="outline" onClick={resetAndScanAgain}>
+                  {t.admin.checkin.scanAnother}
+                </Button>
+              </div>
             ) : showingConfirmation ? (
               <div className="space-y-4 py-2">
-                <p className="text-sm text-muted-foreground font-mono">{lookupResult.registrationCode}</p>
+                <p className="text-sm text-muted-foreground">{formatLookupDetails(lookupResult)}</p>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button
                     onClick={handleConfirmCheckin}

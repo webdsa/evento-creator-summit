@@ -125,10 +125,31 @@ export async function requireRegistrationsAccess(
   throw new Error('Unauthorized');
 }
 
+/** Admin, secretaria (instituição vinculada) ou logística (todos os voos). */
+export async function requireFlightsAccess(
+  authorizationHeader: string | null
+): Promise<StaffAccess> {
+  const user = await getCurrentUser(authorizationHeader);
+  if (!user) {
+    throw new Error('Unauthorized');
+  }
+  const admin = await resolveAdminProfile(user);
+  if (!admin?.enabled) {
+    throw new Error('Unauthorized');
+  }
+  if (admin.role === 'admin' || admin.role === 'logistica') {
+    return { uid: user.uid, role: admin.role, institutionId: null };
+  }
+  if (admin.role === 'secretaria' && admin.institution_id) {
+    return { uid: user.uid, role: 'secretaria', institutionId: admin.institution_id };
+  }
+  throw new Error('Unauthorized');
+}
+
 export function canAccessRegistration(
   staff: StaffAccess,
   institutionId: string | undefined | null
 ): boolean {
-  if (staff.role === 'admin') return true;
+  if (staff.role === 'admin' || staff.role === 'logistica') return true;
   return Boolean(staff.institutionId && institutionId && staff.institutionId === institutionId);
 }

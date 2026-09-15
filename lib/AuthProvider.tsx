@@ -21,7 +21,7 @@ interface AuthContextType {
   loading: boolean;
   /** true = must change password before using app; false = ok; null = not loaded yet */
   mustChangePassword: boolean | null;
-  /** 'admin' | 'checkin' | 'secretaria' | null (null = not loaded or not staff) */
+  /** 'admin' | 'checkin' | 'secretaria' | 'logistica' | null (null = not loaded or not staff) */
   role: AdminRole | null;
   /** Instituição vinculada (perfil secretaria). */
   institutionId: string | null;

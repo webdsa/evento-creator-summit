@@ -6,6 +6,7 @@ import { AdminProtected } from '@/components/AdminProtected';
 import { useLanguage } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthProvider';
 import { fetchWithAuth } from '@/lib/admin-api';
+import type { AdminRole } from '@/lib/admin-roles';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,7 +39,7 @@ import { formatInAppTz } from '@/lib/app-timezone';
 
 export const dynamic = 'force-dynamic';
 
-type Role = 'admin' | 'checkin' | 'secretaria';
+type Role = AdminRole;
 
 interface PlatformUser {
   uid: string;
@@ -120,6 +121,7 @@ export default function AdminUsersPage() {
   const roleLabel = (value: Role) => {
     if (value === 'admin') return t.admin.users.roleAdmin;
     if (value === 'secretaria') return t.admin.users.roleSecretaria;
+    if (value === 'logistica') return t.admin.users.roleLogistica;
     return t.admin.users.roleCheckin;
   };
 
@@ -197,7 +199,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  if (role === 'checkin' || role === 'secretaria') {
+  if (role === 'checkin' || role === 'secretaria' || role === 'logistica') {
     return null;
   }
 
@@ -324,6 +326,7 @@ export default function AdminUsersPage() {
                   <SelectItem value="admin">{t.admin.users.roleAdmin}</SelectItem>
                   <SelectItem value="checkin">{t.admin.users.roleCheckin}</SelectItem>
                   <SelectItem value="secretaria">{t.admin.users.roleSecretaria}</SelectItem>
+                  <SelectItem value="logistica">{t.admin.users.roleLogistica}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

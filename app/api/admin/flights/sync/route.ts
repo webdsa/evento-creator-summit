@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireRegistrationsAccess } from '@/lib/auth';
+import { requireFlightsAccess } from '@/lib/auth';
 import { getFlightSyncStatus, runFlightSync } from '@/lib/flight-sync';
 
 export const dynamic = 'force-dynamic';
@@ -7,7 +7,7 @@ export const maxDuration = 300;
 
 export async function GET(request: NextRequest) {
   try {
-    await requireRegistrationsAccess(request.headers.get('authorization'));
+    await requireFlightsAccess(request.headers.get('authorization'));
   } catch {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireRegistrationsAccess(request.headers.get('authorization'));
+    await requireFlightsAccess(request.headers.get('authorization'));
   } catch {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }

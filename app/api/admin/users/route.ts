@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/admin/users
- * Body: { email: string, password: string, role: 'admin' | 'checkin' | 'secretaria', institution_id?: string }
+ * Body: { email: string, password: string, role: 'admin' | 'checkin' | 'secretaria' | 'logistica', institution_id?: string }
  * Creates a Firebase Auth user and an admins document with the given role. Admin only.
  */
 export async function POST(request: NextRequest) {

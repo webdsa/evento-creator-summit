@@ -243,6 +243,7 @@ export interface Dictionary {
       roleAdmin: string;
       roleCheckin: string;
       roleSecretaria: string;
+      roleLogistica: string;
       institution: string;
       institutionPlaceholder: string;
       institutionRequired: string;
@@ -276,6 +277,7 @@ export interface Dictionary {
       manualCode: string;
       codePlaceholder: string;
       lookup: string;
+      pickFromResults: string;
       confirmFor: string;
       confirmCheckin: string;
       confirmCheckinCountdown: string;
@@ -875,7 +877,7 @@ export const dictionaries: Record<Language, Dictionary> = {
         createUser: 'Criar usuário',
         createUserDescription: 'O usuário poderá acessar o painel conforme o perfil escolhido. E-mail e senha são usados no login em /admin/login.',
         listTitle: 'Usuários da plataforma',
-        listDescription: 'Usuários com acesso ao painel (administradores, secretaria e equipe de check-in).',
+        listDescription: 'Usuários com acesso ao painel (administradores, secretaria, logística e equipe de check-in).',
         email: 'E-mail',
         emailPlaceholder: 'exemplo@email.com',
         password: 'Senha',
@@ -884,6 +886,7 @@ export const dictionaries: Record<Language, Dictionary> = {
         roleAdmin: 'Administrador',
         roleCheckin: 'Check-in (apenas registro no evento)',
         roleSecretaria: 'Secretaria (apenas inscritos da instituição)',
+        roleLogistica: 'Logística (apenas voos)',
         institution: 'Instituição',
         institutionPlaceholder: 'Selecione a instituição',
         institutionRequired: 'Selecione a instituição para o perfil de secretaria.',
@@ -911,12 +914,13 @@ export const dictionaries: Record<Language, Dictionary> = {
 
       checkin: {
         title: 'Check-in no evento',
-        subtitle: 'Escaneie o QR do participante ou digite o código para confirmar a presença.',
+        subtitle: 'Escaneie o QR do participante ou busque por nome, e-mail, documento ou código para confirmar a presença.',
         scanQR: 'Escanear QR',
         scanQRHint: 'Aponte a câmera para o QR do participante (código da inscrição).',
-        manualCode: 'Ou digite o código',
-        codePlaceholder: 'Ex: MT-000123',
+        manualCode: 'Ou busque por nome, e-mail, documento ou código',
+        codePlaceholder: 'Nome, e-mail, documento ou código',
         lookup: 'Buscar',
+        pickFromResults: 'Várias inscrições encontradas. Selecione a pessoa:',
         confirmFor: 'Confirmar check-in de {name}?',
         confirmCheckin: 'Confirmar check-in',
         confirmCheckinCountdown: 'Confirmar check-in ({n}s)',
@@ -1520,7 +1524,7 @@ export const dictionaries: Record<Language, Dictionary> = {
         createUser: 'Crear usuario',
         createUserDescription: 'El usuario podrá acceder al panel según el perfil elegido. Correo y contraseña se usan en el login en /admin/login.',
         listTitle: 'Usuarios de la plataforma',
-        listDescription: 'Usuarios con acceso al panel (administradores, secretaría y equipo de registro).',
+        listDescription: 'Usuarios con acceso al panel (administradores, secretaría, logística y equipo de registro).',
         email: 'Correo electrónico',
         emailPlaceholder: 'ejemplo@email.com',
         password: 'Contraseña',
@@ -1529,6 +1533,7 @@ export const dictionaries: Record<Language, Dictionary> = {
         roleAdmin: 'Administrador',
         roleCheckin: 'Registro (solo check-in en el evento)',
         roleSecretaria: 'Secretaría (solo inscritos de la institución)',
+        roleLogistica: 'Logística (solo vuelos)',
         institution: 'Institución',
         institutionPlaceholder: 'Seleccione la institución',
         institutionRequired: 'Seleccione la institución para el perfil de secretaría.',
@@ -1556,12 +1561,13 @@ export const dictionaries: Record<Language, Dictionary> = {
 
       checkin: {
         title: 'Registro en el evento',
-        subtitle: 'Escanea el código QR del participante o ingresa el código para confirmar la asistencia.',
+        subtitle: 'Escanea el código QR del participante o busca por nombre, correo, documento o código para confirmar la asistencia.',
         scanQR: 'Escanear QR',
         scanQRHint: 'Apunta la cámara al código QR del participante (código de inscripción).',
-        manualCode: 'O ingresa el código',
-        codePlaceholder: 'Ej: MT-000123',
+        manualCode: 'O busca por nombre, correo, documento o código',
+        codePlaceholder: 'Nombre, correo, documento o código',
         lookup: 'Buscar',
+        pickFromResults: 'Se encontraron varias inscripciones. Selecciona a la persona:',
         confirmFor: '¿Confirmar registro de {name}?',
         confirmCheckin: 'Confirmar registro',
         confirmCheckinCountdown: 'Confirmar registro ({n}s)',
