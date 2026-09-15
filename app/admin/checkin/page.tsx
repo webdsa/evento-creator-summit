@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle2, QrCode, Loader2, UserCheck, AlertCircle, CalendarClock } from 'lucide-react';
+import { CheckCircle2, QrCode, Loader2, UserCheck, AlertCircle, CalendarClock, ScanLine } from 'lucide-react';
 import { formatInAppTz } from '@/lib/app-timezone';
 
 export const dynamic = 'force-dynamic';
@@ -211,6 +211,19 @@ export default function AdminCheckinPage() {
       ? formatInAppTz(lookupResult.checkedInAt, "dd/MM/yyyy '·' HH:mm")
       : null;
 
+  const renderScanAnotherButton = () => (
+    <Button
+      type="button"
+      size="lg"
+      className="w-full h-12 gap-2 text-base font-semibold shadow-md"
+      onClick={resetAndScanAgain}
+      disabled={confirmLoading || lookupLoading}
+    >
+      <ScanLine className="h-5 w-5" />
+      {t.admin.checkin.scanAnother}
+    </Button>
+  );
+
   return (
     <AdminProtected>
       <div className="space-y-6">
@@ -239,6 +252,7 @@ export default function AdminCheckinPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {renderScanAnotherButton()}
             {!lookupResult && !showingMatches ? (
               <>
                 <QRScanner
@@ -290,14 +304,12 @@ export default function AdminCheckinPage() {
                     </li>
                   ))}
                 </ul>
-                <Button variant="outline" onClick={resetAndScanAgain}>
-                  {t.admin.checkin.scanAnother}
-                </Button>
+                {renderScanAnotherButton()}
               </div>
             ) : showingConfirmation ? (
               <div className="space-y-4 py-2">
                 <p className="text-sm text-muted-foreground">{formatLookupDetails(lookupResult)}</p>
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-col gap-3">
                   <Button
                     onClick={handleConfirmCheckin}
                     disabled={confirmLoading}
@@ -314,9 +326,7 @@ export default function AdminCheckinPage() {
                         ? t.admin.checkin.confirmCheckinCountdown.replace('{n}', String(countdown))
                         : t.admin.checkin.confirmCheckin}
                   </Button>
-                  <Button variant="outline" onClick={resetAndScanAgain} disabled={confirmLoading}>
-                    {t.admin.checkin.scanAnother}
-                  </Button>
+                  {renderScanAnotherButton()}
                 </div>
               </div>
             ) : showingSuccess ? (
@@ -341,9 +351,7 @@ export default function AdminCheckinPage() {
                     </div>
                   ) : null}
                 </div>
-                <Button variant="outline" onClick={resetAndScanAgain}>
-                  {t.admin.checkin.scanAnother}
-                </Button>
+                {renderScanAnotherButton()}
               </div>
             ) : null}
           </CardContent>
